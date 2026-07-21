@@ -4,263 +4,928 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zahira College Mawanella Science Project</title>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
+</script>
 <style>
-:root{--bg:#060612;--surface:#0f0f23;--surface2:#1a1a35;--primary:#00e8a2;--primary-dim:#00e8a233;--secondary:#7c3aed;--secondary-dim:#7c3aed33;--accent:#f59e0b;--danger:#ef4444;--text:#e8e8f0;--text-dim:#8888aa;--border:#2a2a4a;--glass:rgba(15,15,35,0.85);--glass-border:rgba(255,255,255,0.08);--radius:12px;--radius-sm:8px}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--primary);border-radius:3px}
-#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
-#app{position:relative;z-index:1}
-.landing-page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem}
-.landing-logo{width:130px;height:130px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:3.2rem;margin-bottom:1.5rem;box-shadow:0 0 60px var(--primary-dim),0 0 120px var(--secondary-dim);animation:float 3s ease-in-out infinite}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
-.landing-title{font-family:'Orbitron',sans-serif;font-size:clamp(1.6rem,4.5vw,3.2rem);font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,var(--primary),var(--secondary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem}
-.landing-sub{font-size:1.05rem;color:var(--text-dim);margin-bottom:2.5rem;max-width:620px;line-height:1.6}
-.landing-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
-.landing-features{margin-top:3rem;display:flex;gap:2.5rem;flex-wrap:wrap;justify-content:center}
-.landing-feature{text-align:center;padding:1.5rem;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);backdrop-filter:blur(10px);min-width:140px;transition:all .3s}
-.landing-feature:hover{border-color:var(--primary);transform:translateY(-3px)}
-.landing-feature-num{font-size:2rem;font-weight:900;font-family:'Orbitron',sans-serif;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.landing-feature-label{font-size:.82rem;color:var(--text-dim);margin-top:.3rem}
-.btn{padding:12px 28px;border-radius:var(--radius-sm);border:none;font-family:'Inter',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .3s;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
-.btn-primary{background:linear-gradient(135deg,var(--primary),#00b882);color:#000;box-shadow:0 4px 20px var(--primary-dim)}.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 30px var(--primary-dim)}
-.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
-.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{opacity:.85}
-.btn-sm{padding:8px 16px;font-size:.85rem}.btn-xs{padding:5px 12px;font-size:.78rem;border-radius:6px}
-.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
-.auth-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:2.5rem;width:100%;max-width:460px;backdrop-filter:blur(20px);box-shadow:0 8px 32px rgba(0,0,0,.4)}
-.auth-card h2{font-family:'Orbitron',sans-serif;font-size:1.5rem;margin-bottom:.3rem;color:var(--primary)}
-.auth-card p{color:var(--text-dim);margin-bottom:1.5rem;font-size:.9rem}
-.form-group{margin-bottom:1rem}.form-group label{display:block;font-size:.82rem;font-weight:600;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
-.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Inter',sans-serif;font-size:.95rem;transition:border-color .3s}
-.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary)}
-.form-group textarea{resize:vertical;min-height:80px}.form-group select option{background:var(--surface)}
-.auth-toggle{text-align:center;margin-top:1rem;font-size:.9rem;color:var(--text-dim)}.auth-toggle a{color:var(--primary);cursor:pointer;text-decoration:none}.auth-toggle a:hover{text-decoration:underline}
-.auth-info-box{background:var(--surface2);padding:.8rem 1rem;border-radius:var(--radius-sm);margin-bottom:1rem;font-size:.85rem;color:var(--text-dim);display:flex;align-items:flex-start;gap:8px;line-height:1.5}.auth-info-box i{color:var(--primary);margin-top:2px;flex-shrink:0}
-.main-layout{display:flex;min-height:100vh}
-.sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:transform .3s}
-.sidebar-header{padding:1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-.sidebar-logo{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:900;color:#000;font-family:'Orbitron',sans-serif}
-.sidebar-brand{font-family:'Orbitron',sans-serif;font-size:.8rem;font-weight:700}.sidebar-brand span{color:var(--primary)}
-.sidebar-nav{flex:1;padding:.5rem;overflow-y:auto}
-.nav-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;font-size:.9rem;color:var(--text-dim);margin-bottom:2px}.nav-item:hover{background:var(--surface2);color:var(--text)}.nav-item.active{background:var(--primary-dim);color:var(--primary)}
-.nav-item i{width:20px;text-align:center}
-.nav-section{padding:10px 14px 5px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);opacity:.5}
-.sidebar-footer{padding:1rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
-.sidebar-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#000}
-.sidebar-user-info{flex:1}.sidebar-user-name{font-size:.85rem;font-weight:600}.sidebar-user-role{font-size:.72rem;color:var(--text-dim)}
-.main-content{flex:1;margin-left:260px;padding:1.5rem 2rem;min-height:100vh}
-.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
-.page-title{font-family:'Orbitron',sans-serif;font-size:1.5rem;font-weight:700}.page-title span{color:var(--primary)}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;transition:all .3s}.card:hover{border-color:var(--primary);transform:translateY(-2px)}
-.card-glass{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:1.5rem;backdrop-filter:blur(12px)}
-.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
-.batch-card{background:linear-gradient(135deg,var(--surface),var(--surface2));border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
-.batch-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--secondary))}
-.batch-card:hover{border-color:var(--primary);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,232,162,.15)}
-.batch-year{font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:var(--primary);margin-bottom:.3rem}
-.batch-label{color:var(--text-dim);font-size:.9rem;margin-bottom:1rem}
-.batch-stats{display:flex;gap:1rem}.batch-stat{font-size:.78rem;color:var(--text-dim);display:flex;align-items:center;gap:4px}
-.qna-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-bottom:.8rem;transition:border-color .3s}.qna-item:hover{border-color:var(--primary)}
-.qna-header{display:flex;align-items:center;gap:10px;margin-bottom:.5rem}
-.qna-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#000;flex-shrink:0}
-.qna-meta{flex:1}.qna-author{font-size:.85rem;font-weight:600}.qna-time{font-size:.72rem;color:var(--text-dim)}
-.qna-title{font-weight:600;font-size:1rem;margin-bottom:.3rem}.qna-body{color:var(--text-dim);font-size:.9rem;line-height:1.5}
-.qna-actions{display:flex;gap:.5rem;margin-top:.8rem;flex-wrap:wrap}
-.qna-category-tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600;background:var(--primary-dim);color:var(--primary);margin-bottom:.5rem}
-.answer-item{background:var(--surface2);border-radius:var(--radius-sm);padding:1rem;margin-top:.5rem;margin-left:2rem;border-left:2px solid var(--primary)}
-.chat-layout{display:flex;height:calc(100vh - 100px)}
-.chat-list-panel{width:300px;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface);border-radius:var(--radius) 0 0 var(--radius)}
-.chat-list-header{padding:1rem;border-bottom:1px solid var(--border)}
-.chat-list{flex:1;overflow-y:auto}
-.chat-list-item{display:flex;align-items:center;gap:10px;padding:.8rem 1rem;cursor:pointer;transition:background .2s;border-bottom:1px solid var(--border)}.chat-list-item:hover{background:var(--surface2)}.chat-list-item.active{background:var(--primary-dim)}
-.chat-room-panel{flex:1;display:flex;flex-direction:column;background:var(--bg);border-radius:0 var(--radius) var(--radius) 0}
-.chat-room-header{padding:1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--surface)}
-.chat-messages{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.5rem}
-.chat-msg{max-width:70%;padding:10px 14px;border-radius:12px;font-size:.9rem;line-height:1.4;word-break:break-word;position:relative}
-.chat-msg.sent{align-self:flex-end;background:linear-gradient(135deg,var(--primary),#00b882);color:#000;border-bottom-right-radius:4px}
-.chat-msg.received{align-self:flex-start;background:var(--surface2);border-bottom-left-radius:4px}
-.chat-msg-time{font-size:.68rem;opacity:.6;margin-top:4px}
-.chat-msg-delete{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.4);border:none;color:#fff;width:20px;height:20px;border-radius:50%;font-size:.6rem;cursor:pointer;display:none;align-items:center;justify-content:center}
-.chat-msg:hover .chat-msg-delete{display:flex}
-.chat-input-area{padding:1rem;border-top:1px solid var(--border);display:flex;gap:.5rem;background:var(--surface)}
-.chat-input-area input{flex:1;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:20px;color:var(--text);font-family:'Inter',sans-serif}.chat-input-area input:focus{outline:none;border-color:var(--primary)}
-.chat-request-item{display:flex;align-items:center;gap:10px;padding:.8rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:.5rem}
-.admin-tabs{display:flex;gap:.3rem;margin-bottom:1.5rem;flex-wrap:wrap}
-.admin-tab{padding:8px 18px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--border);cursor:pointer;font-size:.85rem;transition:all .3s;font-weight:500}
-.admin-tab.active{background:var(--primary-dim);color:var(--primary);border-color:var(--primary)}.admin-tab:hover{border-color:var(--primary)}
-.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;width:100%;max-width:500px;max-height:80vh;overflow-y:auto}
-.modal h3{font-family:'Orbitron',sans-serif;margin-bottom:1rem;color:var(--primary)}
-.toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:.5rem}
-.toast{padding:12px 20px;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--border);font-size:.9rem;animation:slideIn .3s ease;display:flex;align-items:center;gap:8px;min-width:250px;max-width:400px}
-.toast.success{border-left:3px solid var(--primary)}.toast.error{border-left:3px solid var(--danger)}.toast.info{border-left:3px solid var(--secondary)}
-@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
-.role-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700}
-.role-badge.student{background:#3b82f620;color:#3b82f6}.role-badge.teacher{background:#00e8a220;color:#00e8a2}.role-badge.admin{background:#ef444420;color:#ef4444}
-.data-table{width:100%;border-collapse:collapse;font-size:.85rem}
-.data-table th{text-align:left;padding:10px 12px;background:var(--surface2);border-bottom:1px solid var(--border);font-weight:600;color:var(--text-dim);text-transform:uppercase;font-size:.75rem;letter-spacing:.5px}
-.data-table td{padding:10px 12px;border-bottom:1px solid var(--border)}.data-table tr:hover td{background:var(--surface2)}
-.file-item{display:flex;align-items:center;gap:10px;padding:.8rem;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:.5rem}
-.file-item i{font-size:1.5rem;color:var(--primary);flex-shrink:0}
-.file-item-info{flex:1;min-width:0}.file-item-name{font-size:.9rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.file-item-meta{font-size:.75rem;color:var(--text-dim)}
-.empty-state{text-align:center;padding:3rem;color:var(--text-dim)}.empty-state i{font-size:3rem;margin-bottom:1rem;opacity:.3;display:block}.empty-state p{font-size:.95rem}
-.search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 14px}
-.search-box input{background:transparent;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:.9rem;width:100%}.search-box input:focus{outline:none}.search-box i{color:var(--text-dim);flex-shrink:0}
-.user-card{display:flex;align-items:center;gap:12px;padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);transition:border-color .3s}.user-card:hover{border-color:var(--primary)}
-.user-card-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-weight:700;color:#000;font-size:1rem;flex-shrink:0}
-.user-card-info{flex:1;min-width:0}.user-card-name{font-weight:600;font-size:.95rem}.user-card-role{font-size:.78rem;color:var(--text-dim)}
-.mobile-header{display:none;position:fixed;top:0;left:0;right:0;height:56px;background:var(--surface);border-bottom:1px solid var(--border);z-index:99;padding:0 1rem;align-items:center;gap:10px}
-.mobile-menu-btn{background:none;border:none;color:var(--text);font-size:1.3rem;cursor:pointer}
-.sidebar-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:99}
-@media(max-width:768px){.mobile-header{display:flex}.sidebar{transform:translateX(-100%);z-index:200}.sidebar.open{transform:translateX(0)}.sidebar-overlay.show{display:block}.main-content{margin-left:0;padding-top:70px;padding-left:1rem;padding-right:1rem}.chat-layout{flex-direction:column;height:auto}.chat-list-panel{width:100%;border-radius:var(--radius)}.chat-room-panel{border-radius:var(--radius);min-height:400px}.cards-grid{grid-template-columns:1fr}.data-table{font-size:.75rem}.data-table th,.data-table td{padding:6px 8px}}
-.cat-tabs{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:1rem}
-.cat-tab{padding:6px 14px;border-radius:20px;font-size:.8rem;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:all .3s;font-weight:500}
-.cat-tab.active{background:var(--primary-dim);color:var(--primary);border-color:var(--primary)}.cat-tab:hover{border-color:var(--primary)}
-.promote-banner{background:linear-gradient(135deg,var(--secondary-dim),var(--primary-dim));border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.5rem;margin-bottom:1rem;display:flex;align-items:center;gap:10px}
-.promote-banner i{font-size:1.2rem;color:var(--accent)}.promote-banner .text{flex:1;font-size:.9rem;line-height:1.5}.promote-banner .text strong{color:var(--accent)}
-.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.hidden{display:none!important}
-.btn-loading{opacity:.6;pointer-events:none}
+:root{--bg:#070d0a;--bg2:#0d1a14;--fg:#e4f0e8;--muted:#5a7d6a;--accent:#00e89d;--accent2:#ffc233;--card:rgba(13,26,20,0.85);--card2:rgba(0,232,157,0.06);--border:rgba(0,232,157,0.15);--danger:#ff4757;--glass:rgba(13,26,20,0.6)}
+*{margin:0;padding:0;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:var(--accent) transparent}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--fg);overflow-x:hidden}
+.font-grotesk{font-family:'Space Grotesk',sans-serif}
+#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;opacity:0.5}
+.glass{background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--border)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;transition:all 0.3s ease}
+.card:hover{border-color:var(--accent);box-shadow:0 0 20px rgba(0,232,157,0.1)}
+.btn-primary{background:var(--accent);color:#000;font-weight:600;padding:10px 24px;border-radius:8px;transition:0.3s;cursor:pointer;border:none}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-2px)}
+.btn-danger{background:var(--danger);color:#fff;font-weight:600;padding:8px 16px;border-radius:8px;cursor:pointer;border:none}
+input,select,textarea{background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--fg);padding:10px;border-radius:8px;width:100%;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+.hidden{display:none !important}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(5px);z-index:50;display:flex;align-items:center;justify-content:center;padding:1rem}
+.chat-msg{max-width:75%;padding:10px 14px;border-radius:12px;margin-bottom:8px;word-wrap:break-word;position:relative}
+.chat-me{background:var(--accent);color:#000;align-self:flex-end;border-bottom-right-radius:2px}
+.chat-them{background:rgba(255,255,255,0.1);color:#fff;align-self:flex-start;border-bottom-left-radius:2px}
+.tag{font-size:0.75rem;padding:2px 8px;border-radius:4px;background:var(--bg2);color:var(--muted)}
+.tag-cat{background:rgba(255,194,51,0.2);color:var(--accent2)}
 </style>
 </head>
 <body>
+
 <canvas id="bg-canvas"></canvas>
-<div id="app"></div>
-<div class="toast-container" id="toasts"></div>
+
+<!-- Navbar -->
+<nav class="glass sticky top-0 z-40 px-6 py-4 flex justify-between items-center flex-wrap gap-4">
+    <div class="flex items-center gap-3">
+        <i class="fas fa-atom text-2xl text-[var(--accent)] animate-spin" style="animation-duration:8s"></i>
+        <h1 class="font-grotesk text-xl font-bold">Zahira College Mawanella</h1>
+    </div>
+    <div id="nav-links" class="flex items-center gap-4 md:gap-6">
+        <button onclick="showSection('home')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Home</button>
+        <button onclick="showSection('batches')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Batches</button>
+        <button onclick="showSection('qa')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Q&A</button>
+        <button onclick="showSection('chat')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Chat</button>
+        <button onclick="showSection('profile')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Profile</button>
+        <button onclick="showSection('admin')" id="admin-nav" class="hidden text-[var(--accent2)] hover:text-white transition text-sm md:text-base">Admin</button>
+        <button onclick="toggleAuth()" id="auth-btn" class="btn-primary">Login</button>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="container mx-auto px-4 py-8 min-h-screen">
+
+    <!-- Home Section -->
+    <section id="home" class="section">
+        <div class="text-center py-20 relative z-10">
+            <h2 class="text-4xl md:text-6xl font-grotesk font-bold mb-6 leading-tight">
+                <span class="text-[var(--accent)]">Science</span> Project Hub<br>
+                <span class="text-2xl md:text-3xl text-[var(--muted)]">A/L 2026 - 2028</span>
+            </h2>
+            <p class="max-w-2xl mx-auto text-lg text-gray-400 mb-8">
+                An interactive platform for students and teachers to collaborate, share resources, and explore science.
+            </p>
+            <button onclick="toggleAuth()" class="btn-primary text-lg px-8 py-3">Get Started</button>
+        </div>
+    </section>
+
+    <!-- Batches Section -->
+    <section id="batches" class="section hidden">
+        <h2 class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Active Batches</h2>
+        <div id="batch-grid" class="grid md:grid-cols-3 gap-6"></div>
+    </section>
+
+    <!-- Q&A Section -->
+    <section id="qa" class="section hidden">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <h2 class="text-3xl font-grotesk font-bold border-l-4 border-[var(--accent)] pl-4">Questions & Answers</h2>
+            <button onclick="document.getElementById('ask-modal').classList.remove('hidden')" class="btn-primary"><i class="fas fa-plus mr-2"></i>Ask Question</button>
+        </div>
+        
+        <div class="flex flex-col md:flex-row gap-4 mb-6">
+            <select id="qa-filter" onchange="renderQuestions()" class="md:w-1/3"></select>
+            <select id="qa-cat-filter" onchange="renderQuestions()" class="md:w-1/3">
+                <option value="">All Categories</option>
+            </select>
+        </div>
+        
+        <div id="qa-list" class="space-y-4"></div>
+    </section>
+
+    <!-- Chat Section -->
+    <section id="chat" class="section hidden">
+        <h2 class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Personal Chat</h2>
+        <div class="grid md:grid-cols-3 gap-6 h-[70vh]">
+            <div class="md:col-span-1 card p-4 overflow-y-auto">
+                <h3 class="font-bold mb-4 text-[var(--accent)]">Active Chats</h3>
+                <div id="chat-list" class="space-y-2"></div>
+                <h3 class="font-bold mt-6 mb-4 text-[var(--accent2)]">Pending Requests</h3>
+                <div id="chat-requests" class="space-y-2"></div>
+            </div>
+            <div class="md:col-span-2 card p-4 flex flex-col">
+                <div id="chat-window" class="flex-1 overflow-y-auto mb-4 flex flex-col">
+                    <div class="m-auto text-gray-500 text-center">
+                        <i class="fas fa-comments text-4xl mb-4 block"></i>
+                        Select a chat to start messaging
+                    </div>
+                </div>
+                <div id="chat-input-area" class="hidden flex gap-2">
+                    <input id="chat-msg" placeholder="Type a message..." onkeypress="if(event.key==='Enter')sendMessage()">
+                    <button onclick="sendMessage()" class="btn-primary"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Profile Section -->
+    <section id="profile" class="section hidden">
+        <h2 class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Profile & Directory</h2>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="card p-6">
+                <h3 class="text-xl font-bold mb-4 text-[var(--accent)]">My Profile</h3>
+                <div id="profile-info" class="space-y-3"></div>
+            </div>
+            <div class="card p-6">
+                <h3 class="text-xl font-bold mb-4 text-[var(--accent)]">Start a New Chat</h3>
+                <p class="text-sm text-gray-400 mb-4">Click to send a chat request. You can chat once they accept.</p>
+                <div id="users-list" class="space-y-2 max-h-96 overflow-y-auto"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Admin Section -->
+    <section id="admin" class="section hidden">
+        <h2 class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent2)] pl-4">Admin Dashboard</h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <div class="card p-6">
+                <h3 class="text-xl font-bold mb-4 text-[var(--accent2)]">Manage Batches</h3>
+                <div class="flex gap-2 mb-4">
+                    <input id="new-batch-name" placeholder="e.g., A/L 2029">
+                    <button onclick="addBatch()" class="btn-primary">Add</button>
+                </div>
+                <div id="admin-batch-list" class="space-y-2"></div>
+            </div>
+
+            <div class="card p-6">
+                <h3 class="text-xl font-bold mb-4 text-[var(--accent2)]">Manage Categories</h3>
+                <div class="flex gap-2 mb-4">
+                    <input id="new-cat-name" placeholder="e.g., Physics">
+                    <button onclick="addCategory()" class="btn-primary">Add</button>
+                </div>
+                <div id="admin-cat-list" class="space-y-2"></div>
+            </div>
+
+            <div class="card p-6 md:col-span-2 lg:col-span-1">
+                <h3 class="text-xl font-bold mb-4 text-[var(--accent2)]">Monitor Personal Chats</h3>
+                <p class="text-sm text-gray-400 mb-4">Select two users to view their private conversation.</p>
+                <div class="flex flex-col gap-2 mb-4">
+                    <select id="admin-user1"></select>
+                    <select id="admin-user2"></select>
+                    <button onclick="adminViewChat()" class="btn-primary">View Chat</button>
+                </div>
+                <div id="admin-chat-window" class="h-48 overflow-y-auto bg-black/20 p-4 rounded flex flex-col"></div>
+            </div>
+
+            <div class="card p-6 md:col-span-2 lg:col-span-3">
+                <h3 class="text-xl font-bold mb-4 text-[var(--accent2)]">Manage User Roles & Accounts</h3>
+                <p class="text-sm text-gray-400 mb-4">Assign roles or delete users from the database.</p>
+                <div id="admin-user-list" class="space-y-2 max-h-96 overflow-y-auto"></div>
+            </div>
+
+        </div>
+    </section>
+</main>
+
+<!-- Auth Modal -->
+<div id="auth-modal" class="modal-bg hidden">
+    <div class="card p-8 w-full max-w-md relative">
+        <button onclick="toggleAuth()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+        <h2 id="auth-title" class="text-2xl font-bold mb-6 text-[var(--accent)]">Login</h2>
+        <div class="space-y-4">
+            <div id="signup-fields" class="hidden space-y-4">
+                <input id="name" type="text" placeholder="Full Name">
+                <input id="phone" type="text" placeholder="Phone Number">
+                <input id="whatsapp" type="text" placeholder="WhatsApp Number">
+                <select id="signup-batch"></select>
+                <p class="text-xs text-gray-500">Note: All new accounts default to "Student" role. An Admin will assign Teacher/Admin roles if needed.</p>
+            </div>
+            <input id="email" type="email" placeholder="Email Address" required>
+            <input id="password" type="password" placeholder="Password" required>
+            <button onclick="handleAuth()" class="btn-primary w-full"><span id="auth-btn-text">Login</span></button>
+            <p class="text-center text-sm text-gray-400">
+                <span id="auth-toggle-text">Don't have an account?</span> 
+                <a href="#" onclick="switchAuthMode()" class="text-[var(--accent)]"><span id="auth-toggle-link">Sign Up</span></a>
+            </p>
+            <p id="auth-error" class="text-red-500 text-sm text-center hidden"></p>
+        </div>
+    </div>
+</div>
+
+<!-- Ask Question Modal -->
+<div id="ask-modal" class="modal-bg hidden">
+    <div class="card p-8 w-full max-w-lg relative">
+        <button onclick="document.getElementById('ask-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+        <h2 class="text-2xl font-bold mb-6 text-[var(--accent)]">Ask a Question</h2>
+        <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <select id="q-batch"></select>
+                <select id="q-category"></select>
+            </div>
+            <input id="q-title" type="text" placeholder="Question Title">
+            <textarea id="q-body" rows="4" placeholder="Describe your question in detail..."></textarea>
+            <div>
+                <label class="text-sm text-gray-400">Attach Image or PDF (Max 5MB)</label>
+                <input type="file" id="q-file" accept="image/*, application/pdf" class="mt-2">
+            </div>
+            <button onclick="postQuestion()" class="btn-primary w-full">Post Question</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+
+// --- 3D BACKGROUND SCENE ---
+const canvas = document.getElementById('bg-canvas');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+camera.position.z = 5;
+
+scene.add(new THREE.AmbientLight(0x404040, 2));
+const light = new THREE.PointLight(0x00e89d, 2, 100);
+light.position.set(5, 5, 5);
+scene.add(light);
+
+const group = new THREE.Group();
+const geometry = new THREE.IcosahedronGeometry(0.5, 0);
+const material = new THREE.MeshStandardMaterial({ color: 0x00e89d, wireframe: true, emissive: 0x004422 });
+
+for(let i=0; i<15; i++) {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set((Math.random()-0.5)*10, (Math.random()-0.5)*10, (Math.random()-0.5)*5);
+    group.add(mesh);
+}
+scene.add(group);
+
+const sphereGeo = new THREE.SphereGeometry(0.2, 16, 16);
+const sphereMat = new THREE.MeshStandardMaterial({ color: 0xffc233, emissive: 0x553300 });
+const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+scene.add(sphere);
+
+function animate3D() {
+    requestAnimationFrame(animate3D);
+    group.rotation.x += 0.001;
+    group.rotation.y += 0.002;
+    const t = Date.now() * 0.0005;
+    sphere.position.x = Math.cos(t) * 4;
+    sphere.position.z = Math.sin(t) * 4;
+    renderer.render(scene, camera);
+}
+animate3D();
+window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+});
+
+</script>
 
 <script>
-const firebaseConfig={apiKey:"AIzaSyDDk_xiDvdcAv_B5oSogFH50azgLBVszKY",authDomain:"e-learing-9adc3.firebaseapp.com",databaseURL:"https://e-learing-9adc3-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"e-learing-9adc3",storageBucket:"e-learing-9adc3.firebasestorage.app",messagingSenderId:"349368530462",appId:"1:349368530462:web:f4cbd2e51995ff7860200f",measurementId:"G-RBESG4YNKM"};
+// --- FIREBASE CONFIG ---
+// REPLACE WITH YOUR ACTUAL FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyDDk_xiDvdcAv_B5oSogFH50azgLBVszKY",
+  authDomain: "e-learing-9adc3.firebaseapp.com",
+  databaseURL: "https://e-learing-9adc3-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "e-learing-9adc3",
+  storageBucket: "e-learing-9adc3.firebasestorage.app",
+  messagingSenderId: "349368530462",
+  appId: "1:349368530462:web:f4cbd2e51995ff7860200f",
+  measurementId: "G-RBESG4YNKM"
+}; 
 firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth(),db=firebase.database();
-const ADMIN_EMAIL="mnmjaasim@gmail.com",DEFAULT_CATS=["Physics","Chemistry","Biology","Mathematics"];
-const S={currentUser:null,userData:null,currentSection:"dashboard",currentBatch:null,currentCategory:"all",currentChatId:null,chatListeners:[],qnaListeners:[],msgListeners:[],adminTab:"batches",batchesCache:{},chatRoomsList:[]};
+const auth = firebase.auth();
+const db = firebase.database();
 
-// Safe getters to prevent Firebase undefined errors
-function getUserName(){return S.userData?.name||"Anonymous"}
-function getUserRole(){return S.userData?.role||"student"}
-function getUserId(){return S.currentUser?.uid||""}
+// --- GLOBAL STATE ---
+let currentUser = null;
+let currentUserData = null;
+let currentChatUser = null;
+let isLoginMode = true;
+let globalBatches = {};
+let globalCategories = {};
 
-function initBg(){const c=document.getElementById("bg-canvas");if(!c)return;const r=new THREE.WebGLRenderer({canvas:c,alpha:true,antialias:true});r.setSize(window.innerWidth,window.innerHeight);r.setPixelRatio(Math.min(window.devicePixelRatio,2));const s=new THREE.Scene(),cam=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,.1,1e3);cam.position.z=30;const pc=600,pos=new Float32Array(pc*3),col=new Float32Array(pc*3);for(let i=0;i<pc;i++){pos[i*3]=(Math.random()-.5)*80;pos[i*3+1]=(Math.random()-.5)*80;pos[i*3+2]=(Math.random()-.5)*80;if(Math.random()>.5){col[i*3]=0;col[i*3+1]=.91;col[i*3+2]=.64}else{col[i*3]=.49;col[i*3+1]=.23;col[i*3+2]=.93}}const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(pos,3));geo.setAttribute("color",new THREE.BufferAttribute(col,3));s.add(new THREE.Points(geo,new THREE.PointsMaterial({size:.15,vertexColors:true,transparent:true,opacity:.5,blending:THREE.AdditiveBlending})));const hG=new THREE.Group();for(let i=0;i<60;i++){const t=i*.3,x1=Math.cos(t)*3,z1=Math.sin(t)*3,x2=Math.cos(t+Math.PI)*3,z2=Math.sin(t+Math.PI)*3,y=t-9,sG=new THREE.SphereGeometry(.15,8,8);const s1=new THREE.Mesh(sG,new THREE.MeshBasicMaterial({color:0x00e8a2,transparent:true,opacity:.7}));s1.position.set(x1,y,z1);hG.add(s1);const s2=new THREE.Mesh(sG,new THREE.MeshBasicMaterial({color:0x7c3aed,transparent:true,opacity:.7}));s2.position.set(x2,y,z2);hG.add(s2);if(i%3===0){const lG=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x1,y,z1),new THREE.Vector3(x2,y,z2)]);hG.add(new THREE.Line(lG,new THREE.LineBasicMaterial({color:0x00e8a2,transparent:true,opacity:.3})))}}hG.position.set(15,0,-10);s.add(hG);const mG=new THREE.Group();mG.add(new THREE.Mesh(new THREE.SphereGeometry(.6,16,16),new THREE.MeshBasicMaterial({color:0x00e8a2,transparent:true,opacity:.5,wireframe:true})));for(let i=0;i<4;i++){const a=(i/4)*Math.PI*2,o=new THREE.Mesh(new THREE.SphereGeometry(.35,12,12),new THREE.MeshBasicMaterial({color:0x7c3aed,transparent:true,opacity:.5,wireframe:true}));o.position.set(Math.cos(a)*2,Math.sin(a)*2,0);mG.add(o);const lG=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),o.position.clone()]);mG.add(new THREE.Line(lG,new THREE.LineBasicMaterial({color:0x00e8a2,transparent:true,opacity:.4})))}mG.position.set(-18,5,-5);s.add(mG);let time=0;function anim(){requestAnimationFrame(anim);time+=.003;s.children[0].rotation.y=time*.5;s.children[0].rotation.x=time*.2;hG.rotation.y=time;mG.rotation.y=time*2;mG.rotation.x=time;r.render(s,cam)}anim();window.addEventListener("resize",()=>{cam.aspect=window.innerWidth/window.innerHeight;cam.updateProjectionMatrix();r.setSize(window.innerWidth,window.innerHeight)})}
+// --- AUTH LOGIC ---
+function toggleAuth() {
+    const modal = document.getElementById('auth-modal');
+    if(modal.classList.contains('hidden')) modal.classList.remove('hidden');
+    else modal.classList.add('hidden');
+}
 
-function toast(m,t="info"){const c=document.getElementById("toasts"),e=document.createElement("div");e.className=`toast ${t}`;const i=t==="success"?"fa-check-circle":t==="error"?"fa-exclamation-circle":"fa-info-circle";e.innerHTML=`<i class="fas ${i}"></i> ${m}`;c.appendChild(e);setTimeout(()=>e.remove(),4e3)}
-function fmtDate(t){if(!t)return"";return new Date(t).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"2-digit",minute:"2-digit"})}
-function initials(n){return(n||"U").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2)}
-function genId(){return db.ref().child("tmp").push().key}
-function esc(s){if(!s)return"";return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
-function fbErr(err){console.error(err);toast("Error: "+(err.message||err),"error")}
-function closeModal(id){document.getElementById(id)?.remove()}
-function createModal(id){const o=document.createElement("div");o.className="modal-overlay";o.id=id;document.body.appendChild(o);return o}
+function switchAuthMode() {
+    isLoginMode = !isLoginMode;
+    document.getElementById('auth-title').innerText = isLoginMode ? "Login" : "Sign Up";
+    document.getElementById('auth-btn-text').innerText = isLoginMode ? "Login" : "Sign Up";
+    document.getElementById('signup-fields').classList.toggle('hidden', isLoginMode);
+    document.getElementById('auth-toggle-text').innerText = isLoginMode ? "Don't have an account?" : "Already have an account?";
+    
+    // Ensure signup batch dropdown is populated when switching to signup
+    if(!isLoginMode) {
+        const signupBatch = document.getElementById('signup-batch');
+        signupBatch.innerHTML = '<option value="">Select Your Batch</option>';
+        for(let id in globalBatches) {
+            signupBatch.innerHTML += `<option value="${id}">${globalBatches[id].name}</option>`;
+        }
+    }
+}
 
-function signUp(email,pw,name,phone,wa){const r=email.trim().toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"student";return auth.createUserWithEmailAndPassword(email,pw).then(c=>db.ref("users/"+c.user.uid).set({name:name||"User",email:email||"",phone:phone||"",whatsapp:wa||"",role:r,createdAt:firebase.database.ServerValue.TIMESTAMP,online:true})).then(()=>toast(r==="admin"?"Admin account created!":"Account created! You are a Student.","success")).catch(e=>fbErr(e))}
-function logIn(email,pw){return auth.signInWithEmailAndPassword(email,pw).then(()=>toast("Welcome back!","success")).catch(e=>fbErr(e))}
-function logOut(){if(S.currentUser)db.ref("users/"+S.currentUser.uid+"/online").set(false);auth.signOut();S.currentUser=null;S.userData=null;cleanListeners();render()}
-function cleanListeners(){[S.chatListeners,S.qnaListeners,S.msgListeners].forEach(a=>a.forEach(f=>f()));S.chatListeners=[];S.qnaListeners=[];S.msgListeners=[]}
+function handleAuth() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const errorEl = document.getElementById('auth-error');
+    errorEl.classList.add('hidden');
 
-function render(){document.getElementById("app").innerHTML=!S.currentUser?(S.currentSection==="signup"?renderSignUp():renderLanding()):renderMainLayout();if(S.currentUser)loadDashboard()}
+    if(!email || !password) return;
 
-function renderLanding(){return`<div class="landing-page"><div class="landing-logo"><i class="fas fa-atom"></i></div><h1 class="landing-title">Zahira College Mawanella<br>Science Project</h1><p class="landing-sub">A collaborative platform for A/L Science students and teachers.</p><div class="landing-btns"><button class="btn btn-primary" onclick="S.currentSection='signup';render()"><i class="fas fa-rocket"></i> Get Started</button><button class="btn btn-secondary" onclick="showLoginModal()"><i class="fas fa-sign-in-alt"></i> Sign In</button></div><div class="landing-features"><div class="landing-feature"><div class="landing-feature-num">3</div><div class="landing-feature-label">Batches</div></div><div class="landing-feature"><div class="landing-feature-num">3</div><div class="landing-feature-label">Roles</div></div><div class="landing-feature"><div class="landing-feature-num">&infin;</div><div class="landing-feature-label">Knowledge</div></div></div></div>`}
+    if(isLoginMode) {
+        auth.signInWithEmailAndPassword(email, password).catch(e => {
+            errorEl.innerText = e.message;
+            errorEl.classList.remove('hidden');
+        });
+    } else {
+        const name = document.getElementById('name').value;
+        const phone = document.getElementById('phone').value;
+        const whatsapp = document.getElementById('whatsapp').value;
+        const batch = document.getElementById('signup-batch').value;
+        
+        let role = "Student";
+        if(email === "admin@zahira.lk") {
+            role = "Admin";
+        }
 
-function showLoginModal(){const m=createModal("login-modal");m.innerHTML=`<div class="modal"><h3><i class="fas fa-sign-in-alt"></i> Sign In</h3><div class="form-group"><label>Email</label><input type="email" id="li-email"></div><div class="form-group"><label>Password</label><input type="password" id="li-pass"></div><button class="btn btn-primary w-full" id="li-btn" style="justify-content:center"><i class="fas fa-arrow-right"></i> Sign In</button><div class="auth-toggle" style="margin-top:.8rem"><a onclick="closeModal('login-modal')">Cancel</a></div></div>`;m.addEventListener("click",e=>{if(e.target===m)closeModal("login-modal")});document.getElementById("li-btn").addEventListener("click",()=>{const e=document.getElementById("li-email").value,p=document.getElementById("li-pass").value;if(!e||!p)return toast("Fill in all fields","error");logIn(e,p).then(()=>closeModal("login-modal"))})}
+        if(!name || !phone || !whatsapp || !batch) {
+            errorEl.innerText = "Please fill all fields (Name, Phone, WhatsApp, Batch)";
+            errorEl.classList.remove('hidden');
+            return;
+        }
 
-function renderSignUp(){return`<div class="auth-page"><div class="auth-card"><h2>Create Account</h2><p>Join the Zahira College Science community</p><div class="form-group"><label>Full Name</label><input type="text" id="su-name"></div><div class="form-group"><label>Email</label><input type="email" id="su-email"></div><div class="form-group"><label>Password</label><input type="password" id="su-pass" placeholder="Min 6 characters"></div><div class="form-group"><label>Phone Number</label><input type="tel" id="su-phone" placeholder="+94 XX XXX XXXX"></div><div class="form-group"><label>WhatsApp Number</label><input type="tel" id="su-wa" placeholder="+94 XX XXX XXXX"></div><div class="auth-info-box"><i class="fas fa-info-circle"></i><span>All new accounts are <strong style="color:var(--primary)">Student</strong>. Teachers assigned by Admin.</span></div><button class="btn btn-primary w-full" id="su-btn" style="justify-content:center"><i class="fas fa-rocket"></i> Create Account</button><div class="auth-toggle">Already have an account? <a onclick="S.currentSection='landing';render()">Sign In</a></div></div></div>`}
+        auth.createUserWithEmailAndPassword(email, password).then(userCredential => {
+            const uid = userCredential.user.uid;
+            db.ref('users/' + uid).set({ name, email, phone, whatsapp, role, batch, uid });
+        }).catch(e => {
+            errorEl.innerText = e.message;
+            errorEl.classList.remove('hidden');
+        });
+    }
+}
 
-document.addEventListener("click",e=>{if(e.target.id==="su-btn"||e.target.closest("#su-btn")){const n=document.getElementById("su-name").value.trim(),em=document.getElementById("su-email").value.trim(),p=document.getElementById("su-pass").value,ph=document.getElementById("su-phone").value.trim(),w=document.getElementById("su-wa").value.trim();if(!n||!em||!p||!ph||!w)return toast("Fill in all fields","error");if(p.length<6)return toast("Password min 6 chars","error");signUp(em,p,n,ph,w)}});
+function logout() {
+    auth.signOut();
+    showSection('home');
+}
 
-function renderMainLayout(){const u=S.userData||{},r=u.role||"student",ia=r==="admin";return`${renderMobileHdr()}<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSB()"></div><div class="main-layout"><aside class="sidebar" id="sidebar"><div class="sidebar-header"><div class="sidebar-logo">Z</div><div class="sidebar-brand"><span>Zahira</span> Science</div></div><nav class="sidebar-nav"><div class="nav-section">Main</div><div class="nav-item ${S.currentSection==="dashboard"?"active":""}" onclick="nav('dashboard')"><i class="fas fa-th-large"></i> Dashboard</div><div class="nav-section">Batches</div><div id="batch-nav"><div class="nav-item text-dim" style="font-size:.85rem"><div class="spinner"></div></div></div><div class="nav-section">Community</div><div class="nav-item ${S.currentSection==="users"?"active":""}" onclick="nav('users')"><i class="fas fa-users"></i> Users</div><div class="nav-item ${S.currentSection==="chat"?"active":""}" onclick="nav('chat')"><i class="fas fa-comments"></i> Chat</div>${ia?`<div class="nav-section">Admin</div><div class="nav-item ${S.currentSection==="admin"?"active":""}" onclick="nav('admin')"><i class="fas fa-shield-alt"></i> Admin Panel</div>`:""}<div class="nav-section">Account</div><div class="nav-item ${S.currentSection==="profile"?"active":""}" onclick="nav('profile')"><i class="fas fa-user-circle"></i> Profile</div></nav><div class="sidebar-footer"><div class="sidebar-avatar">${initials(u.name)}</div><div class="sidebar-user-info"><div class="sidebar-user-name">${esc(u.name)||"User"}</div><div class="sidebar-user-role"><span class="role-badge ${r}">${r}</span></div></div><button onclick="logOut()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1.1rem"><i class="fas fa-sign-out-alt"></i></button></div></aside><main class="main-content" id="main-content">${renderSection()}</main></div>`}
-function renderMobileHdr(){return`<div class="mobile-header"><button class="mobile-menu-btn" onclick="toggleSB()"><i class="fas fa-bars"></i></button><div class="sidebar-brand"><span style="color:var(--primary)">Zahira</span> Science</div></div>`}
-function toggleSB(){document.getElementById("sidebar")?.classList.toggle("open");document.getElementById("sidebar-overlay")?.classList.toggle("show")}
-function nav(s,d){S.currentSection=s;if(d){if(d.batch!==undefined)S.currentBatch=d.batch;if(d.chatId!==undefined)S.currentChatId=d.chatId}render();if(window.innerWidth<768){document.getElementById("sidebar")?.classList.remove("open");document.getElementById("sidebar-overlay")?.classList.remove("show")}}
-function renderSection(){switch(S.currentSection){case"dashboard":return renderDash();case"batch":return renderBatch();case"users":return renderUsers();case"chat":return renderChat();case"profile":return renderProfile();case"admin":return renderAdmin();default:return renderDash()}}
+auth.onAuthStateChanged(user => {
+    if(user) {
+        currentUser = user;
+        db.ref('users/' + user.uid).on('value', snap => {
+            currentUserData = snap.val();
+            if(currentUserData) {
+                updateUIForUser();
+                if(!document.getElementById('home').classList.contains('hidden')) showSection('batches');
+            }
+        });
+        document.getElementById('auth-btn').innerText = "Logout";
+        document.getElementById('auth-btn').onclick = logout;
+    } else {
+        currentUser = null;
+        currentUserData = null;
+        document.getElementById('auth-btn').innerText = "Login";
+        document.getElementById('auth-btn').onclick = toggleAuth;
+        document.getElementById('admin-nav').classList.add('hidden');
+        showSection('home');
+    }
+});
 
-function renderDash(){return`<div class="page-header"><h1 class="page-title">Welcome, <span>${esc(S.userData?.name)||"User"}</span></h1></div><div class="cards-grid" id="dash-grid"><div class="card text-center text-dim" style="padding:3rem"><div class="spinner" style="width:30px;height:30px;margin:0 auto 1rem"></div>Loading...</div></div>`}
+function updateUIForUser() {
+    const batchName = globalBatches[currentUserData.batch]?.name || 'Not Assigned';
+    document.getElementById('profile-info').innerHTML = `
+        <p><strong>Name:</strong> ${currentUserData.name}</p>
+        <p><strong>Email:</strong> ${currentUserData.email}</p>
+        <p><strong>Phone:</strong> ${currentUserData.phone}</p>
+        <p><strong>WhatsApp:</strong> ${currentUserData.whatsapp}</p>
+        <p><strong>Batch:</strong> <span class="text-[var(--accent2)]">${batchName}</span></p>
+        <p><strong>Role:</strong> <span class="text-[var(--accent)] font-bold">${currentUserData.role}</span></p>
+    `;
+    
+    if(currentUserData.role === 'Admin') {
+        document.getElementById('admin-nav').classList.remove('hidden');
+    } else {
+        document.getElementById('admin-nav').classList.add('hidden');
+    }
+    
+    loadUsers();
+    loadChatLists();
+}
 
-function loadDashboard(){db.ref("batches").once("value",snap=>{let b=snap.val()||{};if(Object.keys(b).length===0){["A/L 2026","A/L 2027","A/L 2028"].forEach(n=>{const id=genId(),co={};DEFAULT_CATS.forEach(c=>{co[genId()]=c});db.ref("batches/"+id).set({name:n,categories:co,createdAt:firebase.database.ServerValue.TIMESTAMP})});setTimeout(loadDashboard,2e3);return}Object.entries(b).forEach(([k,bb])=>{const cats=bb.categories?Object.values(bb.categories).filter(x=>typeof x==="string"):[];if(cats.length===0){const co={};DEFAULT_CATS.forEach(c=>{co[genId()]=c});db.ref("batches/"+k+"/categories").set(co)}});db.ref("batches").once("value",snap2=>{b=snap2.val()||{};S.batchesCache=b;const ni=document.getElementById("batch-nav");if(ni){let h="";Object.keys(b).forEach(k=>{h+=`<div class="nav-item ${S.currentBatch===k?"active":""}" onclick="nav('batch',{batch:'${k}'})"><i class="fas fa-flask"></i> ${esc(b[k].name)}</div>`});ni.innerHTML=h}const dg=document.getElementById("dash-grid");if(dg){let h="";Object.keys(b).forEach(k=>{const bb=b[k],c=bb.categories?Object.values(bb.categories).filter(x=>typeof x==="string"):[];h+=`<div class="batch-card card-3d" onclick="nav('batch',{batch:'${k}'})"><div class="card-3d-inner"><div class="batch-year">${esc(bb.name.replace("A/L ",""))}</div><div class="batch-label">${esc(bb.name)}</div><div class="batch-stats"><div class="batch-stat"><i class="fas fa-tag"></i> ${c.length} Categories</div></div><div style="margin-top:.8rem;display:flex;gap:4px;flex-wrap:wrap">${c.map(x=>`<span class="qna-category-tag">${esc(x)}</span>`).join("")}</div></div></div>`});dg.innerHTML=h}});if(S.currentUser){db.ref("chatRequests").orderByChild("to").equalTo(S.currentUser.uid).once("value",s=>{const r=s.val()||{},p=Object.values(r).filter(x=>x.status==="pending").length,bd=document.getElementById("chat-req-badge");if(bd&&p>0)bd.innerHTML=`<span style="background:var(--danger);color:#fff;border-radius:50%;padding:1px 6px;font-size:.7rem;font-weight:700">${p}</span>`})}})}
+// --- NAVIGATION ---
+function showSection(id) {
+    if(id !== 'home' && !currentUser) {
+        toggleAuth();
+        return;
+    }
+    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    if(id === 'batches') loadBatches();
+    if(id === 'qa') { loadDropdowns(); renderQuestions(); }
+    if(id === 'profile') loadUsers();
+    if(id === 'admin') loadAdminData();
+}
 
-function renderBatch(){const bid=S.currentBatch;if(!bid)return'<div class="empty-state"><i class="fas fa-arrow-left"></i><p>Select a batch</p></div>';setTimeout(()=>loadBatchData(bid),50);const canUp=S.userData?.role==="teacher"||S.userData?.role==="admin";return`<div class="page-header"><h1 class="page-title" id="b-title">Loading...</h1><div class="flex gap-1"><button class="btn btn-secondary btn-sm" id="ask-q-btn"><i class="fas fa-plus"></i> Ask Question</button>${canUp?`<button class="btn btn-secondary btn-sm" id="up-file-btn"><i class="fas fa-upload"></i> Upload File</button>`:""}</div></div><div class="cat-tabs" id="b-cats"></div><div id="b-content"><div class="text-center text-dim mt-3"><div class="spinner" style="width:24px;height:24px;margin:0 auto"></div></div></div><div id="b-files" class="mt-3"></div>`}
+// Navigate directly to a specific batch Q&A
+function goToBatchQA(batchId) {
+    showSection('qa');
+    document.getElementById('qa-filter').value = batchId;
+    renderQuestions();
+}
 
-document.addEventListener("click",e=>{if(e.target.id==="ask-q-btn"||e.target.closest("#ask-q-btn"))showAskQ();if(e.target.id==="up-file-btn"||e.target.closest("#up-file-btn"))showUpFile()});
+// --- BATCHES & CATEGORIES GLOBAL LOADERS ---
+function loadDropdowns() {
+    db.ref('batches').on('value', snap => {
+        globalBatches = snap.val() || {};
+        updateBatchUI();
+    });
+    db.ref('categories').on('value', snap => {
+        globalCategories = snap.val() || {};
+        updateCategoryUI();
+    });
+}
 
-function loadBatchData(bid){db.ref("batches/"+bid).once("value",snap=>{const b=snap.val();if(!b)return;const cats=b.categories?Object.values(b.categories).filter(x=>typeof x==="string"):[];if(cats.length===0){const co={};DEFAULT_CATS.forEach(c=>{co[genId()]=c});db.ref("batches/"+bid+"/categories").set(co);setTimeout(()=>loadBatchData(bid),1e3);return}const t=document.getElementById("b-title");if(t)t.innerHTML=`<span>${esc(b.name)}</span>`;const cc=document.getElementById("b-cats");if(cc){let h=`<div class="cat-tab ${S.currentCategory==="all"?"active":""}" onclick="setCat('all')">All</div>`;cats.forEach(c=>{h+=`<div class="cat-tab ${S.currentCategory===c?"active":""}" onclick="setCat('${esc(c)}')">${esc(c)}</div>`});cc.innerHTML=h}loadQnA(bid);loadFiles(bid)})}
-function setCat(c){S.currentCategory=c;if(S.currentBatch)loadBatchData(S.currentBatch)}
+function updateBatchUI() {
+    const filter = document.getElementById('qa-filter');
+    const qBatch = document.getElementById('q-batch');
+    const grid = document.getElementById('batch-grid');
+    const adminList = document.getElementById('admin-batch-list');
+    const signupBatch = document.getElementById('signup-batch');
+    
+    filter.innerHTML = '<option value="">All Batches</option>';
+    qBatch.innerHTML = '<option value="">Select Batch</option>';
+    grid.innerHTML = '';
+    if(adminList) adminList.innerHTML = '';
+    if(signupBatch) signupBatch.innerHTML = '<option value="">Select Your Batch</option>';
 
-function loadQnA(bid){S.qnaListeners.forEach(f=>f());S.qnaListeners=[];const ref=db.ref("qna/"+bid);const cb=ref.on("value",snap=>{const q=snap.val()||{},ct=document.getElementById("b-content");if(!ct)return;let h="";const qk=Object.keys(q);if(qk.length===0){h='<div class="empty-state"><i class="fas fa-question-circle"></i><p>No questions yet. Be the first to ask!</p></div>'}else{qk.reverse().forEach(k=>{const qq=q[k];if(S.currentCategory!=="all"&&qq.category!==S.currentCategory)return;const ans=qq.answers?Object.entries(qq.answers):[];const canReply=S.userData?.role==="teacher"||S.userData?.role==="admin";const canDel=qq.authorId===S.currentUser?.uid||S.userData?.role==="admin";h+=`<div class="qna-item"><div class="qna-header"><div class="qna-avatar">${initials(qq.authorName)}</div><div class="qna-meta"><div class="qna-author">${esc(qq.authorName)||"Unknown"} <span class="role-badge ${qq.authorRole||"student"}" style="font-size:.65rem">${qq.authorRole||"student"}</span></div><div class="qna-time">${fmtDate(qq.timestamp)}</div></div></div><span class="qna-category-tag">${esc(qq.category||"General")}</span><div class="qna-title">${esc(qq.title)}</div><div class="qna-body">${esc(qq.content)}</div>${qq.fileData?`<div class="file-item mt-1"><i class="fas fa-paperclip"></i><div class="file-item-info"><div class="file-item-name">${esc(qq.fileName||"Attachment")}</div></div><a href="${qq.fileData}" download="${esc(qq.fileName||"file")}" class="btn btn-xs btn-secondary"><i class="fas fa-download"></i></a></div>`:""}<div class="qna-actions"><button class="btn btn-xs btn-secondary" onclick="toggleAns('${k}')"><i class="fas fa-comments"></i> ${ans.length} Answer${ans.length!==1?"s":""}</button>${canReply?`<button class="btn btn-xs btn-primary" onclick="showReplyModal('${bid}','${k}')"><i class="fas fa-reply"></i> Reply</button>`:""}${canDel?`<button class="btn btn-xs btn-danger" onclick="delQuestion('${bid}','${k}')"><i class="fas fa-trash"></i></button>`:""}</div><div id="ans-${k}" class="hidden mt-1">${ans.map(([ak,a])=>{const canDelAns=a.authorId===S.currentUser?.uid||S.userData?.role==="admin";return`<div class="answer-item"><div class="flex items-center gap-1 mb-1"><div class="qna-avatar" style="width:24px;height:24px;font-size:.6rem">${initials(a.authorName)}</div><strong style="font-size:.85rem">${esc(a.authorName)}</strong><span class="role-badge ${a.authorRole||"student"}" style="font-size:.6rem">${a.authorRole||"student"}</span><span class="text-dim" style="font-size:.72rem">${fmtDate(a.timestamp)}</span>${canDelAns?`<button class="btn btn-xs btn-danger" style="margin-left:auto" onclick="delAnswer('${bid}','${k}','${ak}')"><i class="fas fa-trash"></i></button>`:""}</div><div style="font-size:.9rem;line-height:1.5">${esc(a.content)}</div>${a.fileData?`<div class="file-item mt-1"><i class="fas fa-paperclip"></i><div class="file-item-info"><div class="file-item-name">${esc(a.fileName||"Attachment")}</div></div><a href="${a.fileData}" download="${esc(a.fileName||"file")}" class="btn btn-xs btn-secondary"><i class="fas fa-download"></i></a></div>`:""}</div>`}).join("")}</div></div>`})}ct.innerHTML=h});S.qnaListeners.push(()=>ref.off("value",cb))}
-function toggleAns(k){document.getElementById("ans-"+k)?.classList.toggle("hidden")}
+    if(Object.keys(globalBatches).length === 0 && currentUserData?.role === 'Admin') {
+        db.ref('batches').set({
+            'batch_2026': { name: 'A/L 2026', desc: 'Science Project Batch 2026' },
+            'batch_2027': { name: 'A/L 2027', desc: 'Science Project Batch 2027' },
+            'batch_2028': { name: 'A/L 2028', desc: 'Science Project Batch 2028' }
+        });
+        return;
+    }
 
-function showAskQ(){const bid=S.currentBatch;if(!bid)return toast("Select a batch first","error");db.ref("batches/"+bid+"/categories").once("value",snap=>{const cats=snap.val()?Object.values(snap.val()).filter(x=>typeof x==="string"):[];if(!cats.length)cats.push("General");const m=createModal("ask-modal");m.innerHTML=`<div class="modal"><h3><i class="fas fa-question-circle"></i> Ask a Question</h3><div class="form-group"><label>Category</label><select id="q-cat">${cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("")}</select></div><div class="form-group"><label>Title</label><input type="text" id="q-title" placeholder="Your question title"></div><div class="form-group"><label>Description</label><textarea id="q-body" placeholder="Describe your question..."></textarea></div><div class="form-group"><label>Attachment (optional, max 1MB)</label><input type="file" id="q-file" style="border:none;padding:0;background:transparent"></div><div class="flex gap-1"><button class="btn btn-primary" id="q-submit"><i class="fas fa-paper-plane"></i> Submit</button><button class="btn btn-secondary" onclick="closeModal('ask-modal')">Cancel</button></div></div>`;m.addEventListener("click",e=>{if(e.target===m)closeModal("ask-modal")});document.getElementById("q-submit").addEventListener("click",()=>doSubmitQuestion(bid))})}
+    for(let id in globalBatches) {
+        const b = globalBatches[id];
+        filter.innerHTML += `<option value="${id}">${b.name}</option>`;
+        qBatch.innerHTML += `<option value="${id}">${b.name}</option>`;
+        if(signupBatch) signupBatch.innerHTML += `<option value="${id}">${b.name}</option>`;
+        
+        grid.innerHTML += `
+            <div class="card p-6 cursor-pointer" onclick="goToBatchQA('${id}')">
+                <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${b.name}</h3>
+                <p class="text-gray-400 mt-2">${b.desc || 'Science Projects & Q&A'}</p>
+                <button class="mt-4 text-sm text-[var(--accent2)]">Enter Q&A <i class="fas fa-arrow-right ml-1"></i></button>
+            </div>
+        `;
+        if(currentUserData?.role === 'Admin' && adminList) {
+            adminList.innerHTML += `
+                <div class="flex justify-between items-center bg-black/20 p-2 rounded">
+                    <input value="${b.name}" id="batch-name-${id}" class="bg-transparent border-none">
+                    <div>
+                        <button onclick="editBatch('${id}')" class="text-yellow-500 px-2"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteBatch('${id}')" class="text-red-500 px-2"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+}
 
-function doSubmitQuestion(bid){try{const cat=document.getElementById("q-cat").value,title=document.getElementById("q-title").value.trim(),body=document.getElementById("q-body").value.trim(),fi=document.getElementById("q-file");if(!title||!body){toast("Fill in title and description","error");return}const btn=document.getElementById("q-submit");btn.classList.add("btn-loading");const id=genId();const data={title:title,content:body,category:cat||"General",authorId:getUserId(),authorName:getUserName(),authorRole:getUserRole(),timestamp:firebase.database.ServerValue.TIMESTAMP};const save=d=>{db.ref("qna/"+bid+"/"+id).set(d).then(()=>{toast("Question posted!","success");closeModal("ask-modal")}).catch(e=>{btn.classList.remove("btn-loading");fbErr(e)})};if(fi&&fi.files&&fi.files.length>0){const f=fi.files[0];if(f.size>1048576){btn.classList.remove("btn-loading");toast("File too large (max 1MB)","error");return}const r=new FileReader();r.onload=e=>{data.fileData=e.target.result;data.fileName=f.name;save(data)};r.onerror=()=>{btn.classList.remove("btn-loading");toast("Failed to read file","error")};r.readAsDataURL(f)}else{save(data)}}catch(e){fbErr(e)}}
+function updateCategoryUI() {
+    const catFilter = document.getElementById('qa-cat-filter');
+    const qCat = document.getElementById('q-category');
+    const adminCatList = document.getElementById('admin-cat-list');
+    
+    if(catFilter) catFilter.innerHTML = '<option value="">All Categories</option>';
+    if(qCat) qCat.innerHTML = '<option value="">Select Category</option>';
+    if(adminCatList) adminCatList.innerHTML = '';
 
-function showReplyModal(bid,qid){const m=createModal("reply-modal");m.innerHTML=`<div class="modal"><h3><i class="fas fa-reply"></i> Post an Answer</h3><div class="form-group"><label>Your Answer</label><textarea id="a-body" placeholder="Write your answer..."></textarea></div><div class="form-group"><label>Attachment (optional, max 1MB)</label><input type="file" id="a-file" style="border:none;padding:0;background:transparent"></div><div class="flex gap-1"><button class="btn btn-primary" id="a-submit"><i class="fas fa-paper-plane"></i> Post</button><button class="btn btn-secondary" onclick="closeModal('reply-modal')">Cancel</button></div></div>`;m.addEventListener("click",e=>{if(e.target===m)closeModal("reply-modal")});document.getElementById("a-submit").addEventListener("click",()=>doSubmitAnswer(bid,qid))}
+    if(Object.keys(globalCategories).length === 0 && currentUserData?.role === 'Admin') {
+        db.ref('categories').set({
+            'cat_phy': { name: 'Physics' },
+            'cat_chem': { name: 'Chemistry' },
+            'cat_bio': { name: 'Biology' }
+        });
+        return;
+    }
 
-function doSubmitAnswer(bid,qid){try{const body=document.getElementById("a-body").value.trim(),fi=document.getElementById("a-file");if(!body){toast("Write an answer","error");return}const btn=document.getElementById("a-submit");btn.classList.add("btn-loading");const id=genId();const data={content:body,authorId:getUserId(),authorName:getUserName(),authorRole:getUserRole(),timestamp:firebase.database.ServerValue.TIMESTAMP};const save=d=>{db.ref("qna/"+bid+"/"+qid+"/answers/"+id).set(d).then(()=>{toast("Answer posted!","success");closeModal("reply-modal")}).catch(e=>{btn.classList.remove("btn-loading");fbErr(e)})};if(fi&&fi.files&&fi.files.length>0){const f=fi.files[0];if(f.size>1048576){btn.classList.remove("btn-loading");toast("File too large (max 1MB)","error");return}const r=new FileReader();r.onload=e=>{data.fileData=e.target.result;data.fileName=f.name;save(data)};r.onerror=()=>{btn.classList.remove("btn-loading");toast("Failed to read file","error")};r.readAsDataURL(f)}else{save(data)}}catch(e){fbErr(e)}}
+    for(let id in globalCategories) {
+        const c = globalCategories[id];
+        if(catFilter) catFilter.innerHTML += `<option value="${id}">${c.name}</option>`;
+        if(qCat) qCat.innerHTML += `<option value="${id}">${c.name}</option>`;
+        if(currentUserData?.role === 'Admin' && adminCatList) {
+            adminCatList.innerHTML += `
+                <div class="flex justify-between items-center bg-black/20 p-2 rounded">
+                    <input value="${c.name}" id="cat-name-${id}" class="bg-transparent border-none">
+                    <div>
+                        <button onclick="editCategory('${id}')" class="text-yellow-500 px-2"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteCategory('${id}')" class="text-red-500 px-2"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+}
 
-function delQuestion(bid,qid){if(!confirm("Delete this question?"))return;db.ref("qna/"+bid+"/"+qid).remove().then(()=>toast("Question deleted","success")).catch(fbErr)}
-function delAnswer(bid,qid,aid){if(!confirm("Delete this answer?"))return;db.ref("qna/"+bid+"/"+qid+"/answers/"+aid).remove().then(()=>toast("Answer deleted","success")).catch(fbErr)}
+function loadBatches() {
+    if(Object.keys(globalBatches).length === 0) loadDropdowns();
+    else updateBatchUI();
+}
 
-function loadFiles(bid){db.ref("files/"+bid).once("value",snap=>{const f=snap.val()||{},ct=document.getElementById("b-files");if(!ct)return;let h="";const fl=Object.entries(f).filter(([,x])=>S.currentCategory==="all"||x.category===S.currentCategory);if(fl.length>0){h=`<h3 class="mb-2" style="font-family:Orbitron;font-size:1.1rem"><i class="fas fa-folder-open text-primary"></i> Files & Resources</h3>`;fl.forEach(([k,ff])=>{h+=`<div class="file-item"><i class="fas fa-file-alt"></i><div class="file-item-info"><div class="file-item-name">${esc(ff.name)}</div><div class="file-item-meta">By ${esc(ff.uploadedByName)} &bull; ${fmtDate(ff.timestamp)} &bull; ${esc(ff.category||"General")}</div></div><a href="${ff.fileData}" download="${esc(ff.name)}" class="btn btn-xs btn-primary"><i class="fas fa-download"></i></a>${ff.uploadedBy===getUserId()||S.userData?.role==="admin"?`<button class="btn btn-xs btn-danger" onclick="delFile('${bid}','${k}')"><i class="fas fa-trash"></i></button>`:""}</div>`})}ct.innerHTML=h})}
+// --- Q&A LOGIC ---
+function postQuestion() {
+    const batch = document.getElementById('q-batch').value;
+    const category = document.getElementById('q-category').value;
+    const title = document.getElementById('q-title').value;
+    const body = document.getElementById('q-body').value;
+    const fileInput = document.getElementById('q-file');
+    const file = fileInput.files[0];
+    
+    if(!batch || !category || !title || !body) return alert("Please fill all text fields including batch and category");
 
-function showUpFile(){const bid=S.currentBatch;if(!bid)return;db.ref("batches/"+bid+"/categories").once("value",snap=>{const cats=snap.val()?Object.values(snap.val()).filter(x=>typeof x==="string"):[];if(!cats.length)cats.push("General");const m=createModal("upload-modal");m.innerHTML=`<div class="modal"><h3><i class="fas fa-upload"></i> Upload File</h3><div class="form-group"><label>Category</label><select id="f-cat">${cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("")}</select></div><div class="form-group"><label>File (max 2MB)</label><input type="file" id="f-file" style="border:none;padding:0;background:transparent"></div><div class="flex gap-1"><button class="btn btn-primary" id="f-submit"><i class="fas fa-cloud-upload-alt"></i> Upload</button><button class="btn btn-secondary" onclick="closeModal('upload-modal')">Cancel</button></div></div>`;m.addEventListener("click",e=>{if(e.target===m)closeModal("upload-modal")});document.getElementById("f-submit").addEventListener("click",()=>doUploadFile(bid))})}
+    const qData = {
+        batch, category, title, body,
+        authorId: currentUser.uid,
+        authorName: currentUserData.name,
+        authorRole: currentUserData.role,
+        timestamp: Date.now()
+    };
 
-function doUploadFile(bid){try{const cat=document.getElementById("f-cat").value,fi=document.getElementById("f-file");if(!fi||!fi.files||!fi.files.length){toast("Select a file","error");return}const f=fi.files[0];if(f.size>2097152){toast("File too large (max 2MB)","error");return}const btn=document.getElementById("f-submit");btn.classList.add("btn-loading");const r=new FileReader();r.onload=e=>{const id=genId();db.ref("files/"+bid+"/"+id).set({name:f.name||"file",fileData:e.target.result,category:cat||"General",uploadedBy:getUserId(),uploadedByName:getUserName(),timestamp:firebase.database.ServerValue.TIMESTAMP}).then(()=>{toast("File uploaded!","success");closeModal("upload-modal")}).catch(er=>{btn.classList.remove("btn-loading");fbErr(er)})};r.onerror=()=>{btn.classList.remove("btn-loading");toast("Failed to read file","error")};r.readAsDataURL(f)}catch(e){fbErr(e)}}
-function delFile(bid,fid){if(!confirm("Delete this file?"))return;db.ref("files/"+bid+"/"+fid).remove().then(()=>toast("File deleted","success")).catch(fbErr)}
+    if(file) {
+        if(file.size > 5242880) return alert("File too large. Max 5MB.");
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            qData.file = e.target.result;
+            qData.fileName = file.name;
+            db.ref('questions').push(qData);
+        };
+        reader.readAsDataURL(file);
+    } else {
+        db.ref('questions').push(qData);
+    }
 
-function renderUsers(){setTimeout(()=>{db.ref("users").once("value",snap=>{const u=snap.val()||{},ct=document.getElementById("users-grid");if(!ct)return;let h="";Object.keys(u).forEach(uid=>{if(uid===S.currentUser.uid)return;const uu=u[uid];h+=`<div class="user-card"><div class="user-card-avatar">${initials(uu.name)}</div><div class="user-card-info"><div class="user-card-name">${esc(uu.name)}</div><div class="user-card-role"><span class="role-badge ${uu.role}">${uu.role}</span></div></div><button class="btn btn-xs btn-primary" onclick="sendChatReq('${uid}')"><i class="fas fa-comment"></i> Chat</button></div>`});if(!h)h='<div class="empty-state"><i class="fas fa-users"></i><p>No other users yet</p></div>';ct.innerHTML=h})},50);return`<div class="page-header"><h1 class="page-title"><span>Users</span> Directory</h1></div><div class="cards-grid" id="users-grid"><div class="text-center text-dim" style="padding:3rem"><div class="spinner" style="width:24px;height:24px;margin:0 auto"></div></div></div>`}
+    document.getElementById('ask-modal').classList.add('hidden');
+    document.getElementById('q-title').value = '';
+    document.getElementById('q-body').value = '';
+    fileInput.value = '';
+}
 
-function sendChatReq(toUid){const from=getUserId();if(!from)return;db.ref("chatRequests").orderByChild("from").equalTo(from).once("value",snap=>{const ex=snap.val()||{};if(Object.values(ex).some(r=>r.to===toUid&&r.status!=="rejected"))return toast("Request already sent","info");db.ref("chatRooms").once("value",snap2=>{const rooms=snap2.val()||{};if(Object.values(rooms).some(r=>r.participants&&r.participants[from]&&r.participants[toUid]))return toast("Already have a chat","info");db.ref("chatRequests/"+genId()).set({from:from,to:toUid,fromName:getUserName(),status:"pending",timestamp:firebase.database.ServerValue.TIMESTAMP}).then(()=>toast("Chat request sent!","success")).catch(fbErr)})})}
+function renderQuestions() {
+    const filterBatch = document.getElementById('qa-filter').value;
+    const filterCat = document.getElementById('qa-cat-filter').value;
+    const list = document.getElementById('qa-list');
+    list.innerHTML = '<div class="text-gray-500">Loading...</div>';
 
-function renderChat(){setTimeout(loadChatList,100);return`<div class="page-header"><h1 class="page-title"><span>Chat</span></h1><button class="btn btn-secondary btn-sm" onclick="showChatReqs()"><i class="fas fa-inbox"></i> Requests</button></div><div class="chat-layout"><div class="chat-list-panel"><div class="chat-list-header"><div class="search-box w-full"><i class="fas fa-search"></i><input placeholder="Search chats..."></div></div><div class="chat-list" id="chat-list"><div class="text-center text-dim" style="padding:2rem"><div class="spinner" style="margin:0 auto"></div></div></div></div><div class="chat-room-panel" id="chat-panel"><div class="empty-state" style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center"><i class="fas fa-comments" style="font-size:3rem;opacity:.2;margin-bottom:1rem"></i><p>Select a conversation or start a new one</p></div></div></div>`}
+    db.ref('questions').on('value', snap => {
+        const questions = snap.val() || {};
+        list.innerHTML = '';
+        let found = false;
 
-function loadChatList(){const uid=getUserId();if(!uid)return;S.chatListeners.forEach(f=>f());S.chatListeners=[];const ref=db.ref("chatRooms");const cb=ref.on("value",snap=>{const rooms=snap.val()||{},ct=document.getElementById("chat-list");if(!ct)return;S.chatRoomsList=[];Object.keys(rooms).forEach(rid=>{const room=rooms[rid];if(!room.participants||!room.participants[uid])return;const oid=Object.keys(room.participants).find(id=>id!==uid);if(!oid)return;S.chatRoomsList.push({roomId:rid,otherUid:oid,otherName:room.participantNames?.[oid]||"User",lastMessage:room.lastMessage||"No messages"})});let h="";if(!S.chatRoomsList.length){h='<div class="text-center text-dim" style="padding:2rem;font-size:.9rem">No conversations yet.<br>Start one from Users Directory!</div>'}else{S.chatRoomsList.forEach((room,idx)=>{h+=`<div class="chat-list-item ${S.currentChatId===room.roomId?"active":""}" data-chat-idx="${idx}"><div class="user-card-avatar" style="width:40px;height:40px;font-size:.85rem">${initials(room.otherName)}</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.9rem">${esc(room.otherName)}</div><div style="font-size:.78rem;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(room.lastMessage)}</div></div></div>`})}ct.innerHTML=h});S.chatListeners.push(()=>ref.off("value",cb))}
+        const sortedQuestions = Object.entries(questions).sort((a, b) => b[1].timestamp - a[1].timestamp);
 
-document.addEventListener("click",e=>{const ci=e.target.closest("[data-chat-idx]");if(ci){const idx=parseInt(ci.dataset.chatIdx);openChatByIdx(idx)}});
+        for(let [id, q] of sortedQuestions) {
+            if(filterBatch && q.batch !== filterBatch) continue;
+            if(filterCat && q.category !== filterCat) continue;
+            found = true;
+            
+            const batchName = globalBatches[q.batch]?.name || 'Unknown Batch';
+            const catName = globalCategories[q.category]?.name || 'General';
+            
+            let repliesHtml = '';
+            if(q.replies) {
+                for(let rId in q.replies) {
+                    const r = q.replies[rId];
+                    const canDeleteReply = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
+                    repliesHtml += `
+                        <div class="mt-3 pl-4 border-l-2 border-[var(--muted)]">
+                            <div class="flex justify-between items-center">
+                                <p class="text-sm text-[var(--accent2)]">${r.authorName} <span class="text-gray-500">(${r.authorRole})</span></p>
+                                ${canDeleteReply ? `<button onclick="deleteReply('${id}', '${rId}')" class="text-red-500 text-xs hover:text-red-400"><i class="fas fa-trash"></i></button>` : ''}
+                            </div>
+                            ${r.text ? `<p class="text-gray-300 mt-1">${r.text}</p>` : ''}
+                            ${r.file ? `<a href="${r.file}" download="${r.fileName || 'file'}" class="text-blue-400 underline text-sm mt-1 inline-block"><i class="fas fa-paperclip"></i> ${r.fileName || 'View Attachment'}</a>` : ''}
+                        </div>
+                    `;
+                }
+            }
 
-function openChatByIdx(idx){const room=S.chatRoomsList[idx];if(!room)return;S.currentChatId=room.roomId;const p=document.getElementById("chat-panel");if(!p)return;p.innerHTML=`<div class="chat-room-header"><div class="user-card-avatar" style="width:36px;height:36px;font-size:.8rem">${initials(room.otherName)}</div><div><div style="font-weight:600">${esc(room.otherName)}</div><div style="font-size:.75rem;color:var(--text-dim)">Private Chat</div></div></div><div class="chat-messages" id="chat-msgs"></div><div class="chat-input-area"><input type="text" id="chat-input" placeholder="Type a message..."><button class="btn btn-primary btn-sm" id="chat-send-btn"><i class="fas fa-paper-plane"></i></button></div>`;S.msgListeners.forEach(f=>f());S.msgListeners=[];const ref=db.ref("chatMessages/"+room.roomId);const cb=ref.on("value",snap=>{const msgs=snap.val()||{},ct=document.getElementById("chat-msgs");if(!ct)return;let h="";Object.entries(msgs).sort((a,b)=>(a[1].timestamp||0)-(b[1].timestamp||0)).forEach(([mid,m])=>{const isSent=m.senderId===getUserId();const canDel=isSent||S.userData?.role==="admin";h+=`<div class="chat-msg ${isSent?"sent":"received"}">${esc(m.content)}${canDel?`<button class="chat-msg-delete" onclick="delChatMsg('${room.roomId}','${mid}')" title="Delete"><i class="fas fa-times"></i></button>`:""}<div class="chat-msg-time">${fmtDate(m.timestamp)}</div></div>`});ct.innerHTML=h;ct.scrollTop=ct.scrollHeight});S.msgListeners.push(()=>ref.off("value",cb));document.getElementById("chat-send-btn").addEventListener("click",sendChatMsg);document.getElementById("chat-input").addEventListener("keypress",e=>{if(e.key==="Enter")sendChatMsg()});document.querySelectorAll(".chat-list-item").forEach((el,i)=>el.classList.toggle("active",i===idx))}
+            const canDeleteQ = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
+            
+            list.innerHTML += `
+                <div class="card p-5">
+                    <div class="flex flex-wrap justify-between items-start mb-2 gap-2">
+                        <h3 class="text-xl font-bold text-[var(--accent)]">${q.title}</h3>
+                        <div class="flex gap-2 items-center">
+                            <span class="tag">${batchName}</span>
+                            <span class="tag tag-cat">${catName}</span>
+                            ${canDeleteQ ? `<button onclick="deleteQuestion('${id}')" class="btn-danger text-xs px-2 py-1"><i class="fas fa-trash"></i> Delete</button>` : ''}
+                        </div>
+                    </div>
+                    <p class="text-gray-400 mb-3">${q.body}</p>
+                    ${q.file ? `<a href="${q.file}" download="${q.fileName || 'file'}" class="text-blue-400 underline text-sm mb-3 inline-block"><i class="fas fa-paperclip"></i> ${q.fileName || 'View Attachment'}</a>` : ''}
+                    <p class="text-sm text-gray-500">Asked by ${q.authorName} (${q.authorRole})</p>
+                    
+                    <div class="replies-section mt-4">
+                        ${repliesHtml}
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-black/20 rounded-lg flex flex-col md:flex-row gap-2 items-start">
+                        <textarea id="reply-input-${id}" placeholder="Type your reply here..." rows="2" class="flex-1 w-full bg-transparent"></textarea>
+                        <div class="flex gap-2 w-full md:w-auto items-center">
+                            <input type="file" id="file-input-${id}" accept="image/*, application/pdf" class="text-xs border-none w-full md:w-auto">
+                            <button onclick="postReply('${id}')" class="btn-primary text-sm whitespace-nowrap">Send Reply</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        if(!found) list.innerHTML = '<div class="text-gray-500">No questions found for this filter. Be the first to ask!</div>';
+    });
+}
 
-function sendChatMsg(){if(!S.currentChatId)return;const i=document.getElementById("chat-input");if(!i)return;const c=i.value.trim();if(!c)return;const id=genId();db.ref("chatMessages/"+S.currentChatId+"/"+id).set({content:c,senderId:getUserId(),senderName:getUserName(),timestamp:firebase.database.ServerValue.TIMESTAMP}).then(()=>{i.value=""}).catch(fbErr);db.ref("chatRooms/"+S.currentChatId).update({lastMessage:c.slice(0,50),lastTimestamp:firebase.database.ServerValue.TIMESTAMP}).catch(fbErr)}
+function postReply(qId) {
+    const text = document.getElementById(`reply-input-${qId}`).value;
+    const fileInput = document.getElementById(`file-input-${qId}`);
+    const file = fileInput.files[0];
 
-function delChatMsg(roomId,msgId){if(!confirm("Delete this message?"))return;db.ref("chatMessages/"+roomId+"/"+msgId).remove().then(()=>toast("Message deleted","success")).catch(fbErr)}
+    if(!text && !file) return alert("Please type a message or attach a file.");
 
-function showChatReqs(){const uid=getUserId();if(!uid)return;db.ref("chatRequests").orderByChild("to").equalTo(uid).once("value",snap=>{const reqs=snap.val()||{},m=createModal("chatreq-modal");let h='<div class="modal"><h3><i class="fas fa-inbox"></i> Chat Requests</h3>';const pending=Object.entries(reqs).filter(([,r])=>r.status==="pending");if(!pending.length){h+='<div class="text-center text-dim" style="padding:1rem">No pending requests</div>'}else{pending.forEach(([k,r])=>{h+=`<div class="chat-request-item"><div class="user-card-avatar" style="width:36px;height:36px">${initials(r.fromName)}</div><div style="flex:1"><strong>${esc(r.fromName)}</strong><br><span class="text-dim" style="font-size:.78rem">${fmtDate(r.timestamp)}</span></div><button class="btn btn-xs btn-primary" onclick="acceptChatReq('${k}','${r.from}')">Accept</button><button class="btn btn-xs btn-danger" onclick="rejectChatReq('${k}')">Decline</button></div>`})}h+=`<button class="btn btn-secondary w-full mt-2" onclick="closeModal('chatreq-modal')" style="justify-content:center">Close</button></div>`;m.innerHTML=h;m.addEventListener("click",e=>{if(e.target===m)closeModal("chatreq-modal")})})}
+    const replyData = {
+        text: text || "",
+        authorId: currentUser.uid,
+        authorName: currentUserData.name,
+        authorRole: currentUserData.role,
+        timestamp: Date.now()
+    };
 
-function acceptChatReq(reqId,fromUid){db.ref("chatRequests/"+reqId).update({status:"accepted"}).catch(fbErr);const roomId=genId(),p={},pn={};p[getUserId()]=true;p[fromUid]=true;pn[getUserId()]=getUserName();db.ref("users/"+fromUid+"/name").once("value",snap=>{pn[fromUid]=snap.val()||"User";db.ref("chatRooms/"+roomId).set({participants:p,participantNames:pn,lastMessage:"Chat started",lastTimestamp:firebase.database.ServerValue.TIMESTAMP,createdAt:firebase.database.ServerValue.TIMESTAMP}).then(()=>{toast("Chat request accepted!","success");closeModal("chatreq-modal");S.currentChatId=roomId;nav("chat")}).catch(fbErr)})}
+    if(file) {
+        if(file.size > 5242880) return alert("File too large. Max 5MB.");
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            replyData.file = e.target.result;
+            replyData.fileName = file.name;
+            db.ref(`questions/${qId}/replies`).push(replyData);
+            document.getElementById(`reply-input-${qId}`).value = '';
+            fileInput.value = '';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        db.ref(`questions/${qId}/replies`).push(replyData);
+        document.getElementById(`reply-input-${qId}`).value = '';
+    }
+}
 
-function rejectChatReq(reqId){db.ref("chatRequests/"+reqId).update({status:"rejected"}).then(()=>{toast("Chat request declined","info");closeModal("chatreq-modal")}).catch(fbErr)}
+function deleteQuestion(qId) {
+    if(confirm("Delete this question and all its replies?")) {
+        db.ref('questions/' + qId).remove();
+    }
+}
 
-function renderProfile(){const u=S.userData||{};return`<div class="page-header"><h1 class="page-title">My <span>Profile</span></h1></div><div class="card-glass" style="max-width:600px"><div class="flex items-center gap-2 mb-3"><div class="user-card-avatar" style="width:64px;height:64px;font-size:1.5rem">${initials(u.name)}</div><div><h2 style="font-size:1.3rem">${esc(u.name)}</h2><span class="role-badge ${u.role}" style="font-size:.8rem">${u.role}</span></div></div><div style="display:grid;gap:.8rem"><div class="form-group"><label>Email</label><input type="email" value="${esc(u.email)||""}" disabled style="opacity:.6"></div><div class="form-group"><label>Phone</label><input type="tel" id="pf-phone" value="${esc(u.phone)||""}"></div><div class="form-group"><label>WhatsApp</label><input type="tel" id="pf-wa" value="${esc(u.whatsapp)||""}"></div><button class="btn btn-primary" id="pf-save"><i class="fas fa-save"></i> Update Profile</button></div></div><div class="mt-3"><button class="btn btn-danger btn-sm" onclick="logOut()"><i class="fas fa-sign-out-alt"></i> Logout</button></div>`}
-document.addEventListener("click",e=>{if(e.target.id==="pf-save"||e.target.closest("#pf-save")){const p=document.getElementById("pf-phone").value.trim(),w=document.getElementById("pf-wa").value.trim();db.ref("users/"+getUserId()).update({phone:p||"",whatsapp:w||""}).then(()=>{toast("Profile updated!","success");if(S.userData){S.userData.phone=p;S.userData.whatsapp=w}}).catch(fbErr)}});
+function deleteReply(qId, rId) {
+    if(confirm("Delete this reply?")) {
+        db.ref(`questions/${qId}/replies/${rId}`).remove();
+    }
+}
 
-function renderAdmin(){if(S.userData?.role!=="admin")return'<div class="empty-state"><i class="fas fa-lock"></i><p>Access denied</p></div>';return`<div class="page-header"><h1 class="page-title"><span>Admin</span> Panel</h1></div><div class="admin-tabs"><div class="admin-tab ${S.adminTab==="batches"?"active":""}" onclick="setATab('batches')"><i class="fas fa-layer-group"></i> Batches</div><div class="admin-tab ${S.adminTab==="categories"?"active":""}" onclick="setATab('categories')"><i class="fas fa-tags"></i> Categories</div><div class="admin-tab ${S.adminTab==="users"?"active":""}" onclick="setATab('users')"><i class="fas fa-users-cog"></i> Users</div><div class="admin-tab ${S.adminTab==="chats"?"active":""}" onclick="setATab('chats')"><i class="fas fa-eye"></i> Chats</div></div><div id="admin-content">${renderATab()}</div>`}
-function setATab(t){S.adminTab=t;const ct=document.getElementById("admin-content");if(ct)ct.innerHTML=renderATab();document.querySelectorAll(".admin-tab").forEach(el=>{const tl={batches:"batch",categories:"categor",users:"user",chats:"chat"};el.classList.toggle("active",el.textContent.toLowerCase().includes(tl[t]||t))})}
-function renderATab(){switch(S.adminTab){case"batches":return renderABatches();case"categories":return renderACats();case"users":return renderAUsers();case"chats":return renderAChats();default:return""}}
+// --- USERS & CHAT LOGIC ---
+function loadUsers() {
+    db.ref('users').on('value', snap => {
+        const users = snap.val() || {};
+        const list = document.getElementById('users-list');
+        const adminUserList = document.getElementById('admin-user-list');
+        const u1 = document.getElementById('admin-user1');
+        const u2 = document.getElementById('admin-user2');
+        
+        if(list) list.innerHTML = '';
+        if(adminUserList) adminUserList.innerHTML = '';
+        if(u1) u1.innerHTML = '<option value="">Select User 1</option>';
+        if(u2) u2.innerHTML = '<option value="">Select User 2</option>';
+        
+        Object.keys(users).forEach(uid => {
+            const u = users[uid];
+            
+            if(uid !== currentUser.uid && list) {
+                list.innerHTML += `
+                    <div class="flex justify-between items-center bg-black/20 p-2 rounded">
+                        <div>
+                            <p class="font-semibold">${u.name}</p>
+                            <p class="text-xs text-gray-500">${u.role}</p>
+                        </div>
+                        <button onclick="sendChatRequest('${uid}')" class="text-xs btn-primary px-2 py-1">Request Chat</button>
+                    </div>
+                `;
+            }
 
-function renderABatches(){setTimeout(()=>{db.ref("batches").once("value",snap=>{const b=snap.val()||{},ct=document.getElementById("a-batches");if(!ct)return;let h="";if(!Object.keys(b).length){h='<div class="text-dim text-center" style="padding:1rem">No batches</div>'}else{Object.entries(b).forEach(([k,bb])=>{const cats=bb.categories?Object.values(bb.categories).filter(x=>typeof x==="string"):[];h+=`<div class="flex items-center justify-between" style="padding:.8rem;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:.5rem"><div><strong>${esc(bb.name)}</strong><div class="text-dim" style="font-size:.8rem">${cats.join(", ")||"No categories"}</div></div><div class="flex gap-1"><button class="btn btn-xs btn-secondary" onclick="editBatch('${k}')"><i class="fas fa-edit"></i></button><button class="btn btn-xs btn-danger" onclick="delBatch('${k}')"><i class="fas fa-trash"></i></button></div></div>`})}ct.innerHTML=h})},50);return`<div class="card mb-2"><h3 style="margin-bottom:1rem"><i class="fas fa-plus-circle text-primary"></i> Add Batch</h3><div class="flex gap-1"><input type="text" id="new-batch-name" placeholder="e.g. A/L 2029" style="flex:1;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:Inter,sans-serif"><button class="btn btn-primary" id="add-batch-btn"><i class="fas fa-plus"></i> Add</button></div></div><div id="a-batches"><div class="text-center text-dim"><div class="spinner" style="margin:0 auto"></div></div></div>`}
-document.addEventListener("click",e=>{if(e.target.id==="add-batch-btn"||e.target.closest("#add-batch-btn")){const n=document.getElementById("new-batch-name").value.trim();if(!n)return toast("Enter batch name","error");const id=genId(),co={};DEFAULT_CATS.forEach(c=>{co[genId()]=c});db.ref("batches/"+id).set({name:n,categories:co,createdAt:firebase.database.ServerValue.TIMESTAMP}).then(()=>{toast("Batch added!","success");document.getElementById("new-batch-name").value="";renderATab()}).catch(fbErr)}});
-function editBatch(k){db.ref("batches/"+k).once("value",snap=>{const b=snap.val();if(!b)return;const m=createModal("edit-batch-modal");m.innerHTML=`<div class="modal"><h3><i class="fas fa-edit"></i> Edit Batch</h3><div class="form-group"><label>Batch Name</label><input type="text" id="eb-name" value="${esc(b.name)}"></div><div class="flex gap-1"><button class="btn btn-primary" id="eb-save"><i class="fas fa-save"></i> Save</button><button class="btn btn-secondary" onclick="closeModal('edit-batch-modal')">Cancel</button></div></div>`;m.addEventListener("click",e=>{if(e.target===m)closeModal("edit-batch-modal")});document.getElementById("eb-save").addEventListener("click",()=>{const n=document.getElementById("eb-name").value.trim();if(!n)return toast("Enter name","error");db.ref("batches/"+k+"/name").set(n).then(()=>{toast("Updated!","success");closeModal("edit-batch-modal");renderATab()}).catch(fbErr)})})}
-function delBatch(k){if(!confirm("Delete this batch and all content?"))return;Promise.all([db.ref("batches/"+k).remove(),db.ref("qna/"+k).remove(),db.ref("files/"+k).remove()]).then(()=>toast("Batch deleted","success")).catch(fbErr).finally(renderATab)}
+            if(currentUserData?.role === 'Admin') {
+                if(adminUserList) {
+                    adminUserList.innerHTML += `
+                        <div class="flex flex-col md:flex-row justify-between items-center bg-black/20 p-2 rounded gap-2">
+                            <div class="flex-1">
+                                <p class="font-semibold">${u.name} ${uid === currentUser.uid ? '(You)' : ''}</p>
+                                <p class="text-xs text-gray-500">${u.email}</p>
+                            </div>
+                            <div class="flex gap-2 items-center">
+                                <select onchange="updateUserRole('${uid}', this.value)" class="w-full md:w-40">
+                                    <option value="Student" ${u.role === 'Student' ? 'selected' : ''}>Student</option>
+                                    <option value="Teacher" ${u.role === 'Teacher' ? 'selected' : ''}>Teacher</option>
+                                    <option value="Admin" ${u.role === 'Admin' ? 'selected' : ''}>Admin</option>
+                                </select>
+                                ${uid !== currentUser.uid ? `<button onclick="deleteUserAccount('${uid}')" class="btn-danger text-xs px-3 py-2"><i class="fas fa-trash"></i></button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+                if(u1) u1.innerHTML += `<option value="${uid}">${u.name} (${u.role})</option>`;
+                if(u2) u2.innerHTML += `<option value="${uid}">${u.name} (${u.role})</option>`;
+            }
+        });
+    });
+}
 
-function renderACats(){setTimeout(()=>{db.ref("batches").once("value",snap=>{const b=snap.val()||{},ct=document.getElementById("a-cats");if(!ct)return;let h="";if(!Object.keys(b).length){h='<div class="text-dim text-center" style="padding:1rem">No batches</div>'}else{Object.entries(b).forEach(([k,bb])=>{const cats=bb.categories?Object.entries(bb.categories).filter(([,v])=>typeof v==="string"):[];h+=`<div class="card mb-2"><h4 style="margin-bottom:.8rem"><i class="fas fa-flask text-primary"></i> ${esc(bb.name)}</h4><div class="flex flex-wrap gap-1 mb-1">${cats.map(([ck,c])=>`<span class="qna-category-tag" style="display:inline-flex;align-items:center;gap:4px">${esc(c)}<button onclick="delCat('${k}','${ck}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:.7rem"><i class="fas fa-times"></i></button></span>`).join("")}${!cats.length?'<span class="text-dim" style="font-size:.85rem">No categories</span>':""}</div><div class="flex gap-1 mt-1"><input type="text" id="nc-${k}" placeholder="New category" style="flex:1;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.85rem"><button class="btn btn-xs btn-primary" onclick="addCat('${k}')"><i class="fas fa-plus"></i></button></div></div>`})}ct.innerHTML=h})},50);return`<div id="a-cats"><div class="text-center text-dim"><div class="spinner" style="margin:0 auto"></div></div></div>`}
-function addCat(bk){const i=document.getElementById("nc-"+bk),c=i?.value.trim();if(!c)return toast("Enter category name","error");db.ref("batches/"+bk+"/categories/"+genId()).set(c).then(()=>{toast("Category added!","success");if(i)i.value="";renderATab()}).catch(fbErr)}
-function delCat(bk,ck){if(!confirm("Delete this category?"))return;db.ref("batches/"+bk+"/categories/"+ck).remove().then(()=>{toast("Category deleted","success");renderATab()}).catch(fbErr)}
+function deleteUserAccount(uid) {
+    if(confirm("Delete this user? This will remove their profile, role, and data from the database.")) {
+        db.ref('users/' + uid).remove().then(() => {
+            alert("User removed from database.");
+        }).catch(e => alert("Error: " + e.message));
+    }
+}
 
-function renderAUsers(){setTimeout(()=>{db.ref("users").once("value",snap=>{const u=snap.val()||{},ct=document.getElementById("a-users");if(!ct)return;let h=`<div class="promote-banner mb-2"><i class="fas fa-user-shield"></i><div class="text"><strong>Role Management:</strong> Only Admin can assign Teacher role.</div></div><div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Phone</th><th>WhatsApp</th><th>Change Role</th><th>Actions</th></tr></thead><tbody>`;Object.entries(u).forEach(([uid,uu])=>{const ia=uu.email?.toLowerCase()===ADMIN_EMAIL.toLowerCase();h+=`<tr><td style="font-weight:600">${esc(uu.name)}</td><td style="font-size:.8rem">${esc(uu.email)}</td><td><span class="role-badge ${uu.role}">${uu.role}</span></td><td style="font-size:.8rem">${esc(uu.phone)||"-"}</td><td style="font-size:.8rem">${esc(uu.whatsapp)||"-"}</td><td><select onchange="changeRole('${uid}',this.value)" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:.78rem;cursor:pointer"><option value="student" ${uu.role==="student"?"selected":""}>Student</option><option value="teacher" ${uu.role==="teacher"?"selected":""}>Teacher</option><option value="admin" ${uu.role==="admin"?"selected":""}>Admin</option></select></td><td>${ia?'<span class="text-dim" style="font-size:.75rem"><i class="fas fa-shield-alt"></i> Protected</span>':`<button class="btn btn-xs btn-danger" onclick="delUser('${uid}')"><i class="fas fa-trash"></i></button>`}</td></tr>`});h+="</tbody></table></div>";ct.innerHTML=h})},50);return`<div id="a-users"><div class="text-center text-dim"><div class="spinner" style="margin:0 auto"></div></div></div>`}
-function changeRole(uid,role){const rn={student:"Student",teacher:"Teacher",admin:"Admin"};if(!confirm(`Change role to ${rn[role]}?`))return;db.ref("users/"+uid+"/role").set(role).then(()=>{toast(`Role updated to ${rn[role]}!`,"success");renderATab()}).catch(fbErr)}
-function delUser(uid){if(!confirm("Remove this user?"))return;db.ref("users/"+uid).remove().then(()=>{toast("User removed","success");renderATab()}).catch(fbErr)}
+function updateUserRole(uid, newRole) {
+    db.ref('users/' + uid).update({ role: newRole });
+    alert("User role updated to " + newRole);
+}
 
-function renderAChats(){setTimeout(()=>{db.ref("chatRooms").once("value",snap=>{const rooms=snap.val()||{},ct=document.getElementById("a-chats");if(!ct)return;let h="";if(!Object.keys(rooms).length){h='<div class="text-dim text-center" style="padding:2rem">No chat rooms</div>'}else{Object.entries(rooms).forEach(([rid,room])=>{const names=room.participantNames||{},nl=Object.values(names).map(n=>esc(n)).join(" & ");h+=`<div class="card mb-1"><div class="flex items-center justify-between"><div><strong>${nl}</strong><div class="text-dim" style="font-size:.78rem">${esc(room.lastMessage||"No messages")} &bull; ${fmtDate(room.lastTimestamp)}</div></div><button class="btn btn-xs btn-secondary" onclick="adminViewChat('${rid}')"><i class="fas fa-eye"></i> View</button></div></div>`})}ct.innerHTML=h})},50);return`<div id="a-chats"><div class="text-center text-dim"><div class="spinner" style="margin:0 auto"></div></div></div>`}
-function adminViewChat(rid){db.ref("chatMessages/"+rid).once("value",snap=>{const msgs=snap.val()||{},m=createModal("admin-chat-modal");let h='<div class="modal"><h3><i class="fas fa-eye text-primary"></i> Chat Messages</h3><div style="max-height:400px;overflow-y:auto">';const sorted=Object.entries(msgs).sort((a,b)=>(a[1].timestamp||0)-(b[1].timestamp||0));if(!sorted.length){h+='<div class="text-dim text-center" style="padding:1rem">No messages</div>'}else{sorted.forEach(([mid,msg])=>{h+=`<div class="chat-msg received" style="max-width:90%"><strong style="font-size:.75rem;color:var(--accent)">${esc(msg.senderName)}</strong><br>${esc(msg.content)}${S.userData?.role==="admin"?`<button class="chat-msg-delete" style="display:flex" onclick="delChatMsg('${rid}','${mid}');adminViewChat('${rid}')"><i class="fas fa-times"></i></button>`:""}<div class="chat-msg-time">${fmtDate(msg.timestamp)}</div></div>`})}h+=`</div><button class="btn btn-secondary w-full mt-2" onclick="closeModal('admin-chat-modal')" style="justify-content:center">Close</button></div>`;m.innerHTML=h;m.addEventListener("click",e=>{if(e.target===m)closeModal("admin-chat-modal")})})}
+function sendChatRequest(toUid) {
+    const reqId = [currentUser.uid, toUid].sort().join('_');
+    db.ref(`chatRequests/${reqId}`).set({
+        from: currentUser.uid,
+        fromName: currentUserData.name,
+        to: toUid,
+        status: 'pending'
+    });
+    alert("Chat request sent!");
+}
 
-auth.onAuthStateChanged(user=>{if(user){S.currentUser=user;db.ref("users/"+user.uid).once("value",snap=>{let ud=snap.val();if(!ud){const role=(user.email&&user.email.trim().toLowerCase()===ADMIN_EMAIL.toLowerCase())?"admin":"student";ud={name:user.displayName||user.email.split("@")[0]||"User",email:user.email||"",phone:"",whatsapp:"",role:role,createdAt:firebase.database.ServerValue.TIMESTAMP,online:true};db.ref("users/"+user.uid).set(ud).then(()=>{S.userData=ud;S.currentSection="dashboard";render();toast(`Profile created! Role: ${role}`,"success")}).catch(fbErr);return}if(user.email&&user.email.trim().toLowerCase()===ADMIN_EMAIL.toLowerCase()&&ud.role!=="admin"){db.ref("users/"+user.uid+"/role").set("admin").then(()=>{ud.role="admin";S.userData=ud;S.currentSection="dashboard";db.ref("users/"+user.uid+"/online").set(true);render();toast("Admin privileges restored!","success")}).catch(fbErr);return}S.userData=ud;S.currentSection="dashboard";db.ref("users/"+user.uid+"/online").set(true);render()})}else{S.currentUser=null;S.userData=null;S.currentSection="landing";cleanListeners();render()}});
+function loadChatLists() {
+    db.ref('chatRequests').on('value', snap => {
+        const requests = snap.val() || {};
+        const reqList = document.getElementById('chat-requests');
+        const chatList = document.getElementById('chat-list');
+        if(reqList) reqList.innerHTML = '';
+        if(chatList) chatList.innerHTML = '';
 
-initBg();render();
-window.addEventListener("beforeunload",()=>{if(S.currentUser)db.ref("users/"+S.currentUser.uid+"/online").set(false)});
+        for(let id in requests) {
+            const r = requests[id];
+            if(r.to === currentUser.uid && r.status === 'pending') {
+                if(reqList) reqList.innerHTML += `
+                    <div class="bg-black/20 p-2 rounded flex justify-between items-center">
+                        <span class="text-sm">${r.fromName}</span>
+                        <div class="flex gap-1">
+                            <button onclick="acceptReq('${id}')" class="bg-green-600 px-2 py-1 rounded text-xs">Accept</button>
+                            <button onclick="declineReq('${id}')" class="bg-red-600 px-2 py-1 rounded text-xs">Decline</button>
+                        </div>
+                    </div>
+                `;
+            } else if(r.status === 'accepted' && (r.to === currentUser.uid || r.from === currentUser.uid)) {
+                const otherId = r.from === currentUser.uid ? r.to : r.from;
+                db.ref('users/' + otherId).once('value', uSnap => {
+                    const u = uSnap.val();
+                    if(u && chatList) chatList.innerHTML += `
+                        <div onclick="openChat('${otherId}', '${u.name}')" class="p-2 bg-black/20 rounded cursor-pointer hover:bg-black/40">
+                            <p class="font-semibold">${u.name}</p>
+                            <p class="text-xs text-gray-500">${u.role}</p>
+                        </div>
+                    `;
+                });
+            }
+        }
+    });
+}
+
+function acceptReq(id) { db.ref('chatRequests/' + id).update({ status: 'accepted' }); }
+function declineReq(id) { db.ref('chatRequests/' + id).remove(); }
+
+let chatListener = null;
+function openChat(otherId, otherName) {
+    currentChatUser = otherId;
+    const chatId = [currentUser.uid, otherId].sort().join('_');
+    
+    if(chatListener) chatListener.off();
+    
+    const win = document.getElementById('chat-window');
+    win.innerHTML = `<div class="text-center text-gray-500 border-b pb-2 mb-2 w-full">${otherName}</div>`;
+    document.getElementById('chat-input-area').classList.remove('hidden');
+    
+    chatListener = db.ref('chats/' + chatId);
+    chatListener.on('value', snap => {
+        const msgs = snap.val() || {};
+        win.innerHTML = `<div class="text-center text-gray-500 border-b pb-2 mb-2 w-full">${otherName}</div>`;
+        
+        const canDeleteMsg = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
+        
+        for(let id in msgs) {
+            const m = msgs[id];
+            const cls = m.sender === currentUser.uid ? 'chat-me' : 'chat-them';
+            const deleteBtn = canDeleteMsg ? `<button onclick="deleteChatMsg('${id}')" class="absolute -top-2 -right-2 bg-red-600 rounded-full w-5 h-5 text-xs hidden group-hover:block">x</button>` : '';
+            win.innerHTML += `<div class="chat-msg ${cls} group">${m.text} ${deleteBtn}</div>`;
+        }
+        win.scrollTop = win.scrollHeight;
+    });
+}
+
+function deleteChatMsg(msgId) {
+    if(!currentChatUser) return;
+    const chatId = [currentUser.uid, currentChatUser].sort().join('_');
+    if(confirm("Delete this message?")) {
+        db.ref('chats/' + chatId + '/' + msgId).remove();
+    }
+}
+
+function sendMessage() {
+    if(!currentChatUser) return;
+    const input = document.getElementById('chat-msg');
+    const text = input.value;
+    if(!text) return;
+    
+    const chatId = [currentUser.uid, currentChatUser].sort().join('_');
+    db.ref('chats/' + chatId).push({
+        sender: currentUser.uid,
+        text: text,
+        timestamp: Date.now()
+    });
+    input.value = '';
+}
+
+// --- ADMIN LOGIC ---
+function loadAdminData() {
+    loadDropdowns(); 
+    loadUsers();
+}
+
+function addBatch() {
+    const name = document.getElementById('new-batch-name').value;
+    if(!name) return;
+    db.ref('batches').push({ name: name, desc: 'Science Project Batch' });
+    document.getElementById('new-batch-name').value = '';
+}
+function editBatch(id) {
+    const newName = document.getElementById(`batch-name-${id}`).value;
+    db.ref('batches/' + id).update({ name: newName });
+}
+function deleteBatch(id) {
+    if(confirm("Delete this batch?")) db.ref('batches/' + id).remove();
+}
+
+function addCategory() {
+    const name = document.getElementById('new-cat-name').value;
+    if(!name) return;
+    db.ref('categories').push({ name: name });
+    document.getElementById('new-cat-name').value = '';
+}
+function editCategory(id) {
+    const newName = document.getElementById(`cat-name-${id}`).value;
+    db.ref('categories/' + id).update({ name: newName });
+}
+function deleteCategory(id) {
+    if(confirm("Delete this category?")) db.ref('categories/' + id).remove();
+}
+
+function adminViewChat() {
+    const u1 = document.getElementById('admin-user1').value;
+    const u2 = document.getElementById('admin-user2').value;
+    if(!u1 || !u2 || u1 === u2) return alert("Select two different users");
+    
+    const chatId = [u1, u2].sort().join('_');
+    const win = document.getElementById('admin-chat-window');
+    win.innerHTML = '<div class="text-gray-500">Loading...</div>';
+    
+    db.ref('chats/' + chatId).once('value').then(snap => {
+        const msgs = snap.val() || {};
+        win.innerHTML = '';
+        if(Object.keys(msgs).length === 0) win.innerHTML = '<div class="text-gray-500">No messages found between these users.</div>';
+        
+        const u1Name = document.getElementById('admin-user1').selectedOptions[0].text.split(' (')[0];
+        const u2Name = document.getElementById('admin-user2').selectedOptions[0].text.split(' (')[0];
+        
+        for(let id in msgs) {
+            const m = msgs[id];
+            const isU1 = m.sender === u1;
+            const cls = isU1 ? 'chat-them' : 'chat-me';
+            const senderName = isU1 ? u1Name : u2Name;
+            win.innerHTML += `<div class="chat-msg ${cls}"><strong class="block text-xs opacity-50">${senderName}</strong>${m.text}</div>`;
+        }
+        win.scrollTop = win.scrollHeight;
+    });
+}
+
+// Init global listeners
+loadDropdowns();
 </script>
 </body>
 </html>
