@@ -290,7 +290,6 @@ const firebaseConfig = {
   appId: "1:349368530462:web:f4cbd2e51995ff7860200f",
   measurementId: "G-RBESG4YNKM"
 }; 
-
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
@@ -362,8 +361,11 @@ function logout() {
     showSection('home');
 }
 
-auth.onAuthStateChanged(user => {
-    if(user) {
+// Explicitly set persistence to LOCAL to keep users logged in across sessions (even in webviews like Pake+)
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .then(() => {
+    auth.onAuthStateChanged(user => {
+      if(user) {
         currentUser = user;
         db.ref('users/' + user.uid).on('value', snap => {
             currentUserData = snap.val();
@@ -374,15 +376,19 @@ auth.onAuthStateChanged(user => {
         });
         document.getElementById('auth-btn').innerText = "Logout";
         document.getElementById('auth-btn').onclick = logout;
-    } else {
+      } else {
         currentUser = null;
         currentUserData = null;
         document.getElementById('auth-btn').innerText = "Login";
         document.getElementById('auth-btn').onclick = toggleAuth;
         document.getElementById('admin-nav').classList.add('hidden');
         showSection('home');
-    }
-});
+      }
+    });
+  })
+  .catch((error) => {
+    console.error("Error setting auth persistence:", error);
+  });
 
 function updateUIForUser() {
     const batchName = globalBatches[currentUserData.batch]?.name || 'Not Assigned';
