@@ -1,16 +1,5 @@
-// --- GLOBAL STATE ---
-let currentUser = null;
-let currentUserData = null;
-let currentChatUser = null;
-let isLoginMode = true;
-let globalBatches = {};
-let globalCategories = {};
-let selectedBatchId = null;
-
-// Replace the placeholder below with your key starting with AIzaSy
 const GEMINI_API_KEY = "AQ.Ab8RN6ITSuF0vOGIPdcHvzcO5K0Q510S5dQ1LgVMQwduxuKWmw";
 
-// --- AI TUTOR DIRECT GEMINI API LOGIC ---
 async function askAITutor() {
     const input = document.getElementById("ai-chat-input");
     const windowEl = document.getElementById("ai-chat-window");
@@ -57,10 +46,5 @@ async function askAITutor() {
     }
 }
 
-// Expose askAITutor globally so onclick="askAITutor()" works with script type="module"
+// Attach ONLY askAITutor to window inside ai.js
 window.askAITutor = askAITutor;
-// Attach all HTML button handlers to window
-window.askAITutor = askAITutor;
-window.toggleTheme = toggleTheme;      // Replace/add your actual function names
-window.switchTab = switchTab;          // Replace/add your actual function names
-window.handleLogin = handleLogin;      // Replace/add your actual function names
