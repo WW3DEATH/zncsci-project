@@ -117,7 +117,7 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
         <div id="cat-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
     </section>
 
-    <!-- AI Tutor Section -->
+    <!-- AI Tutor Section (NEW) -->
     <section id="ai-tutor" class="section hidden">
         <h2 class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Zahira Science AI Assistant</h2>
         <div class="card p-6 max-w-4xl mx-auto flex flex-col h-[70vh]">
@@ -130,7 +130,7 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
             </div>
             <div id="ai-chat-window" class="flex-1 overflow-y-auto mb-4 flex flex-col gap-3 p-2">
                 <div class="chat-msg chat-ai">
-                    🤖 <strong>Hello!</strong> I am your AI Science Assistant for Zahira College Mawanella. How can I help you with your A/L science studies today?
+                    👋 <strong>Hello!</strong> I am your AI Science Assistant for Zahira College Mawanella. How can I help you with your A/L science studies today?
                 </div>
             </div>
             <div class="flex gap-2">
@@ -294,9 +294,6 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
     </div>
 </div>
 
-<!-- Load ai.js -->
-<script src="ai.js" defer></script>
-
 <script type="module">
 import * as THREE from 'three';
 
@@ -344,306 +341,7 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 });
-</script>
 
-<!-- Standard script so showSection, toggleAuth, toggleTheme remain global -->
-<script>
-// --- FIREBASE CONFIG ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDDk_xiDvdcAv_B5oSogFH50azgLBVszKY",
-  authDomain: "e-learing-9adc3.firebaseapp.com",
-  databaseURL: "https://e-learing-9adc3-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "e-learing-9adc3",
-  storageBucket: "e-learing-9adc3.firebasestorage.app",
-  messagingSenderId: "349368530462",
-  appId: "1:349368530462:web:f4cbd2e51995ff7860200f",
-  measurementId: "G-RBESG4YNKM"
-}; 
-
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.database();
-
-// --- GLOBAL STATE ---
-let currentUser = null;
-let currentUserData = null;
-let currentChatUser = null;
-let isLoginMode = true;
-let globalBatches = {};
-let globalCategories = {};
-let selectedBatchId = null;
-
-// --- THEME LOGIC ---
-function toggleTheme() {
-    const body = document.body;
-    const isLight = body.classList.toggle('light-mode');
-    localStorage.setItem('theme', isLight ? 'light' : 'dark');
-    document.getElementById('theme-btn').innerHTML = isLight ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-}
-
-if(localStorage.getItem('theme') === 'light') {
-    document.body.classList.add('light-mode');
-    document.getElementById('theme-btn').innerHTML = '<i class="fas fa-sun"></i>';
-}
-
-// --- AUTH LOGIC ---
-function toggleAuth() {
-    const modal = document.getElementById('auth-modal');
-    if(modal.classList.contains('hidden')) modal.classList.remove('hidden');
-    else modal.classList.add('hidden');
-}
-
-function switchAuthMode() {
-    isLoginMode = !isLoginMode;
-    document.getElementById('auth-title').innerText = isLoginMode ? "Login" : "Sign Up";
-    document.getElementById('auth-btn-text').innerText = isLoginMode ? "Login" : "Sign Up";
-    document.getElementById('signup-fields').classList.toggle('hidden', isLoginMode);
-    document.getElementById('auth-toggle-text').innerText = isLoginMode ? "Don't have an account?" : "Already have an account?";
-}
-
-function handleAuth() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const errorEl = document.getElementById('auth-error');
-    errorEl.classList.add('hidden');
-
-    if(!email || !password) return;
-
-    if(isLoginMode) {
-        auth.signInWithEmailAndPassword(email, password).catch(e => {
-            errorEl.innerText = e.message;
-            errorEl.classList.remove('hidden');
-        });
-    } else {
-        const name = document.getElementById('name').value;
-        const phone = document.getElementById('phone').value;
-        const whatsapp = document.getElementById('whatsapp').value;
-        
-        let role = "Student";
-        if(email === "admin@zahira.lk") {
-            role = "Admin";
-        }
-
-        if(!name || !phone || !whatsapp) {
-            errorEl.innerText = "Please fill all fields (Name, Phone, WhatsApp)";
-            errorEl.classList.remove('hidden');
-            return;
-        }
-
-        auth.createUserWithEmailAndPassword(email, password).then(userCredential => {
-            const uid = userCredential.user.uid;
-            db.ref('users/' + uid).set({ name, email, phone, whatsapp, role, uid });
-        }).catch(e => {
-            errorEl.innerText = e.message;
-            errorEl.classList.remove('hidden');
-        });
-    }
-}
-
-function logout() {
-    auth.signOut();
-    showSection('home');
-}
-
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-  .then(() => {
-    auth.onAuthStateChanged(user => {
-      if(user) {
-        document.getElementById('auth-modal').classList.add('hidden');
-        document.getElementById('email').value = '';
-        document.getElementById('password').value = '';
-        document.getElementById('auth-error').classList.add('hidden');
-
-        currentUser = user;
-        db.ref('users/' + user.uid).on('value', snap => {
-            currentUserData = snap.val();
-            if(currentUserData) {
-                updateUIForUser();
-                if(!document.getElementById('home').classList.contains('hidden')) showSection('batches');
-            }
-        });
-        document.getElementById('auth-btn').innerText = "Logout";
-        document.getElementById('auth-btn').onclick = logout;
-      } else {
-        currentUser = null;
-        currentUserData = null;
-        document.getElementById('auth-btn').innerText = "Login";
-        document.getElementById('auth-btn').onclick = toggleAuth;
-        document.getElementById('admin-nav').classList.add('hidden');
-        showSection('home');
-      }
-    });
-  })
-  .catch((error) => {
-    console.error("Error setting auth persistence:", error);
-  });
-
-function updateUIForUser() {
-    const batchName = globalBatches[currentUserData.batch]?.name || 'Not Assigned';
-    document.getElementById('profile-info').innerHTML = `
-        <p><strong>Name:</strong> ${currentUserData.name}</p>
-        <p><strong>Email:</strong> ${currentUserData.email}</p>
-        <p><strong>Phone:</strong> ${currentUserData.phone}</p>
-        <p><strong>WhatsApp:</strong> ${currentUserData.whatsapp}</p>
-        <p><strong>Batch:</strong> <span class="text-[var(--accent2)]">${batchName}</span></p>
-        <p><strong>Role:</strong> <span class="text-[var(--accent)] font-bold">${currentUserData.role}</span></p>
-    `;
-    
-    if(currentUserData.role === 'Admin') {
-        document.getElementById('admin-nav').classList.remove('hidden');
-    } else {
-        document.getElementById('admin-nav').classList.add('hidden');
-    }
-    
-    loadUsers();
-    loadChatLists();
-}
-
-// --- NAVIGATION ---
-function showSection(id) {
-    if(id !== 'home' && !currentUser) {
-        toggleAuth();
-        return;
-    }
-    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
-    if(id === 'batches') loadBatches();
-    if(id === 'qa') { loadDropdowns(); renderQuestions(); }
-    if(id === 'profile') loadUsers();
-    if(id === 'admin') loadAdminData();
-}
-
-function showBatchCategories(batchId) {
-    selectedBatchId = batchId;
-    const batchName = globalBatches[batchId]?.name || 'Batch';
-    document.getElementById('cat-section-title').innerText = batchName + ' - Select a Category';
-    
-    const grid = document.getElementById('cat-grid');
-    grid.innerHTML = '';
-    
-    for(let id in globalCategories) {
-        const c = globalCategories[id];
-        grid.innerHTML += `
-            <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px]" onclick="goToCategoryQA('${batchId}', '${id}')">
-                <i class="fas fa-book-open text-4xl text-[var(--accent)] mb-4"></i>
-                <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${c.name}</h3>
-                <p class="text-gray-400 mt-2 text-sm">Enter Q&A Section</p>
-            </div>
-        `;
-    }
-    
-    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-    document.getElementById('batch-categories').classList.remove('hidden');
-}
-
-function goToCategoryQA(batchId, catId) {
-    showSection('qa');
-    document.getElementById('qa-filter').value = batchId;
-    document.getElementById('qa-cat-filter').value = catId;
-    renderQuestions();
-}
-
-// --- BATCHES & CATEGORIES GLOBAL LOADERS ---
-function loadDropdowns() {
-    db.ref('batches').on('value', snap => {
-        globalBatches = snap.val() || {};
-        if(!snap.exists()) {
-            const defaultBatches = {
-                'batch_2028': { name: 'A/L 2028', desc: 'Science Project Batch 2028' }
-            };
-            db.ref('batches').set(defaultBatches);
-            globalBatches = defaultBatches;
-        }
-        updateBatchUI();
-    });
-    
-    db.ref('categories').on('value', snap => {
-        globalCategories = snap.val() || {};
-        if(!snap.exists()) {
-            const defaultCats = {
-                'cat_phy': { name: 'Physics' },
-                'cat_chem': { name: 'Chemistry' },
-                'cat_bio': { name: 'Biology' }
-            };
-            db.ref('categories').set(defaultCats);
-            globalCategories = defaultCats;
-        }
-        updateCategoryUI();
-    });
-}
-
-function updateBatchUI() {
-    const filter = document.getElementById('qa-filter');
-    const qBatch = document.getElementById('q-batch');
-    const grid = document.getElementById('batch-grid');
-    const adminList = document.getElementById('admin-batch-list');
-    
-    if(filter) filter.innerHTML = '<option value="">All Batches</option>';
-    if(qBatch) qBatch.innerHTML = '<option value="">Select Batch</option>';
-    if(grid) grid.innerHTML = '';
-    if(adminList) adminList.innerHTML = '';
-
-    for(let id in globalBatches) {
-        const b = globalBatches[id];
-        if(filter) filter.innerHTML += `<option value="${id}">${b.name}</option>`;
-        if(qBatch) qBatch.innerHTML += `<option value="${id}">${b.name}</option>`;
-        
-        if(grid) {
-            grid.innerHTML += `
-                <div class="card p-6 cursor-pointer" onclick="showBatchCategories('${id}')">
-                    <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${b.name}</h3>
-                    <p class="text-gray-400 mt-2">${b.desc || 'Science Projects & Q&A'}</p>
-                    <button class="mt-4 text-sm text-[var(--accent2)]">View Categories <i class="fas fa-arrow-right ml-1"></i></button>
-                </div>
-            `;
-        }
-        if(currentUserData?.role === 'Admin' && adminList) {
-            adminList.innerHTML += `
-                <div class="flex justify-between items-center bg-black/20 p-2 rounded">
-                    <input value="${b.name}" id="batch-name-${id}" class="bg-transparent border-none">
-                    <div>
-                        <button onclick="editBatch('${id}')" class="text-yellow-500 px-2"><i class="fas fa-edit"></i></button>
-                        <button onclick="deleteBatch('${id}')" class="text-red-500 px-2"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-            `;
-        }
-    }
-}
-
-function updateCategoryUI() {
-    const catFilter = document.getElementById('qa-cat-filter');
-    const qCat = document.getElementById('q-category');
-    const adminCatList = document.getElementById('admin-cat-list');
-    
-    if(catFilter) catFilter.innerHTML = '<option value="">All Categories</option>';
-    if(qCat) qCat.innerHTML = '<option value="">Select Category</option>';
-    if(adminCatList) adminCatList.innerHTML = '';
-
-    for(let id in globalCategories) {
-        const c = globalCategories[id];
-        if(catFilter) catFilter.innerHTML += `<option value="${id}">${c.name}</option>`;
-        if(qCat) qCat.innerHTML += `<option value="${id}">${c.name}</option>`;
-        if(currentUserData?.role === 'Admin' && adminCatList) {
-            adminCatList.innerHTML += `
-                <div class="flex justify-between items-center bg-black/20 p-2 rounded">
-                    <input value="${c.name}" id="cat-name-${id}" class="bg-transparent border-none">
-                    <div>
-                        <button onclick="editCategory('${id}')" class="text-yellow-500 px-2"><i class="fas fa-edit"></i></button>
-                        <button onclick="deleteCategory('${id}')" class="text-red-500 px-2"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-            `;
-        }
-    }
-}
-
-function loadBatches() {
-    if(Object.keys(globalBatches).length === 0) loadDropdowns();
-    else updateBatchUI();
-}
-
-loadDropdowns();
 </script>
 
 <script>
@@ -672,10 +370,7 @@ let globalBatches = {};
 let globalCategories = {};
 let selectedBatchId = null;
 
-// REPLACE THIS WITH YOUR VALID GEMINI API KEY FROM GOOGLE AI STUDIO (starts with AIzaSy)
-const GEMINI_API_KEY = "AQ.Ab8RN6ITSuF0vOGIPdcHvzcO5K0Q510S5dQ1LgVMQwduxuKWmw";
-
-// --- AI TUTOR DIRECT GEMINI API LOGIC ---
+// --- AI TUTOR API LOGIC ---
 async function askAITutor() {
     const input = document.getElementById("ai-chat-input");
     const windowEl = document.getElementById("ai-chat-window");
@@ -692,32 +387,18 @@ async function askAITutor() {
     windowEl.scrollTop = windowEl.scrollHeight;
 
     try {
-        const response = await fetch((`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${AQ.Ab8RN6ITSuF0vOGIPdcHvzcO5K0Q510S5dQ1LgVMQwduxuKWmw}`, {
+        const response = await fetch("/api/ai", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: prompt }]
-                }],
-                systemInstruction: {
-                    parts: [{ text: "You are an AI Science Tutor for Zahira College Mawanella students studying Sri Lankan A/L Science (Physics, Chemistry, Biology)." }]
-                }
-            })
+            body: JSON.stringify({ prompt: prompt }),
         });
 
         const data = await response.json();
+        const aiText = data.text || "Sorry, I couldn't process that question right now.";
         
-        if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-            const aiText = data.candidates[0].content.parts[0].text;
-            windowEl.innerHTML += `<div class="chat-msg chat-ai">🤖<strong>AI Tutor:</strong><br>${aiText.replace(/\n/g, '<br>')}</div>`;
-        } else if (data.error) {
-            windowEl.innerHTML += `<div class="chat-msg chat-ai text-red-400">API Error: ${data.error.message || 'Failed to fetch AI response.'}</div>`;
-        } else {
-            windowEl.innerHTML += `<div class="chat-msg chat-ai text-red-400">Unable to generate response.</div>`;
-        }
+        windowEl.innerHTML += `<div class="chat-msg chat-ai">🤖 <strong>AI Tutor:</strong><br>${aiText}</div>`;
     } catch (err) {
-        console.error(err);
-        windowEl.innerHTML += `<div class="chat-msg chat-ai text-red-400">Error connecting to AI service.</div>`;
+        windowEl.innerHTML += `<div class="chat-msg chat-ai text-red-400">Error connecting to AI backend.</div>`;
     } finally {
         sendBtn.disabled = false;
         sendBtn.innerHTML = `<i class="fas fa-paper-plane"></i> Ask AI`;
@@ -725,36 +406,25 @@ async function askAITutor() {
     }
 }
 
-// AI Helper inside the Q&A thread
+// Optional AI Helper inside the Q&A thread
 async function askAIForQuestion(qId, questionTitle, questionBody) {
     const inputArea = document.getElementById(`reply-input-${qId}`);
     const prompt = `Student asked: "${questionTitle}". Context: "${questionBody}". Give a concise science explanation.`;
 
-    inputArea.value = "🤖Asking AI Tutor for an automated answer...";
+    inputArea.value = "🤖 Asking AI Tutor for an automated answer...";
 
     try {
-        const response = await fetch((`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${AQ.Ab8RN6ITSuF0vOGIPdcHvzcO5K0Q510S5dQ1LgVMQwduxuKWmw}`, {
+        const response = await fetch("/api/ai", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: prompt }]
-                }],
-                systemInstruction: {
-                    parts: [{ text: "You are an AI Science Tutor for Zahira College Mawanella students studying Sri Lankan A/L Science (Physics, Chemistry, Biology)." }]
-                }
-            })
+            body: JSON.stringify({ prompt: prompt }),
         });
 
         const data = await response.json();
-        if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-            const aiText = data.candidates[0].content.parts[0].text;
-            inputArea.value = `🤖[AI Generated Explanation]:\n${aiText}`;
-        } else {
-            inputArea.value = "Error fetching AI response.";
+        if (data.text) {
+            inputArea.value = `🤖 [AI Generated Explanation]:\n${data.text}`;
         }
     } catch (err) {
-        console.error(err);
         inputArea.value = "Error fetching AI response.";
     }
 }
@@ -837,6 +507,7 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
   .then(() => {
     auth.onAuthStateChanged(user => {
       if(user) {
+        // Close the modal and clear fields upon successful login/signup
         document.getElementById('auth-modal').classList.add('hidden');
         document.getElementById('email').value = '';
         document.getElementById('password').value = '';
