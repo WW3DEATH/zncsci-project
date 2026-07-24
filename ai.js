@@ -1,25 +1,17 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Initialize the SDK with your API key
+const genAI = new GoogleGenerativeAI("AQ.Ab8RN6KCXqts6DpBQ48UccmrnPZbj5LHpRQ0J1oyeQAs3bsFMQ");
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+async function generateResponse() {
+  // Use the active Gemini Flash model endpoint
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-  const { prompt } = req.body;
+  const prompt = "Explain how client-side API authentication works.";
 
-  try {
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      systemInstruction: "You are an AI Science Assistant for Zahira College Mawanella students. Answer questions clearly."
-    });
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    
-    return res.status(200).json({ text: response.text() });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  console.log(response.text());
 }
+
+generateResponse();
