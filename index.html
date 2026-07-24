@@ -14,45 +14,38 @@
 { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
 </script>
 <style>
-:root {
-    --bg: #070d0a; --bg2: #0d1a14; --fg: #e4f0e8; --muted: #5a7d6a; 
-    --accent: #00e89d; --accent2: #ffc233; --card: rgba(13,26,20,0.85); 
-    --card2: rgba(0,232,157,0.06); --border: rgba(0,232,157,0.15); 
-    --danger: #ff4757; --glass: rgba(13,26,20,0.6); 
-    --bg-input: rgba(0,0,0,0.3); --bg-subtle: rgba(0,0,0,0.2); 
-    --link: #60a5fa; --chat-them-bg: rgba(255,255,255,0.1);
-}
-html.light-mode {
-    --bg: #f4f7f5; --bg2: #e8efea; --fg: #0d1a14; --muted: #4b5563; 
-    --accent: #00b377; --accent2: #d97706; --card: rgba(255,255,255,0.9); 
-    --card2: rgba(0,179,119,0.05); --border: rgba(0,179,119,0.25); 
-    --danger: #ef4444; --glass: rgba(255,255,255,0.8); 
-    --bg-input: rgba(0,0,0,0.05); --bg-subtle: rgba(0,0,0,0.05); 
-    --link: #2563eb; --chat-them-bg: rgba(0,0,0,0.08);
-}
+:root{--bg:#070d0a;--bg2:#0d1a14;--fg:#e4f0e8;--muted:#5a7d6a;--accent:#00e89d;--accent2:#ffc233;--card:rgba(13,26,20,0.85);--card2:rgba(0,232,157,0.06);--border:rgba(0,232,157,0.15);--danger:#ff4757;--glass:rgba(13,26,20,0.6)}
+body.light-mode{--bg:#f4f7f5;--bg2:#e8f0ec;--fg:#0a1a12;--muted:#4a6358;--accent:#009963;--accent2:#e69500;--card:rgba(255,255,255,0.95);--card2:rgba(0,153,99,0.05);--border:rgba(0,0,0,0.1);--danger:#ff4757;--glass:rgba(255,255,255,0.8)}
 *{margin:0;padding:0;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:var(--accent) transparent}
-body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--fg);overflow-x:hidden;transition: background 0.3s ease, color 0.3s ease;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--fg);overflow-x:hidden;transition:background 0.3s ease}
 .font-grotesk{font-family:'Space Grotesk',sans-serif}
-#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;opacity:0.5;transition: opacity 0.3s ease;}
-html.light-mode #bg-canvas{opacity: 0.15;}
+#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;opacity:0.5;transition:opacity 0.3s ease}
+body.light-mode #bg-canvas{opacity:0.2}
 .glass{background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--border)}
 .card{background:var(--card);border:1px solid var(--border);border-radius:16px;transition:all 0.3s ease}
 .card:hover{border-color:var(--accent);box-shadow:0 0 20px rgba(0,232,157,0.1)}
 .btn-primary{background:var(--accent);color:#000;font-weight:600;padding:10px 24px;border-radius:8px;transition:0.3s;cursor:pointer;border:none}
 .btn-primary:hover{background:var(--accent2);transform:translateY(-2px)}
 .btn-danger{background:var(--danger);color:#fff;font-weight:600;padding:8px 16px;border-radius:8px;cursor:pointer;border:none}
-input,select,textarea{background:var(--bg-input);border:1px solid var(--border);color:var(--fg);padding:10px;border-radius:8px;width:100%;outline:none}
+input,select,textarea{background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--fg);padding:10px;border-radius:8px;width:100%;outline:none;transition:all 0.3s ease}
+body.light-mode input,body.light-mode select,body.light-mode textarea{background:rgba(255,255,255,0.8)}
 input:focus,textarea:focus,select:focus{border-color:var(--accent)}
 .hidden{display:none !important}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(5px);z-index:50;display:flex;align-items:center;justify-content:center;padding:1rem}
+body.light-mode .modal-bg{background:rgba(0,0,0,0.5)}
 .chat-msg{max-width:75%;padding:10px 14px;border-radius:12px;margin-bottom:8px;word-wrap:break-word;position:relative}
 .chat-me{background:var(--accent);color:#000;align-self:flex-end;border-bottom-right-radius:2px}
-.chat-them{background:var(--chat-them-bg);color:var(--fg);align-self:flex-start;border-bottom-left-radius:2px}
+.chat-them{background:rgba(255,255,255,0.1);color:#fff;align-self:flex-start;border-bottom-left-radius:2px}
+body.light-mode .chat-them{background:rgba(0,0,0,0.1);color:#000}
 .tag{font-size:0.75rem;padding:2px 8px;border-radius:4px;background:var(--bg2);color:var(--muted)}
 .tag-cat{background:rgba(255,194,51,0.2);color:var(--accent2)}
-.text-muted{color: var(--muted);}
-.link-text{color: var(--link);}
-.bg-subtle{background: var(--bg-subtle);}
+
+/* Helper classes for Tailwind to respect dark/light mode */
+body.light-mode .text-gray-400{color:#555 !important}
+body.light-mode .text-gray-500{color:#666 !important}
+body.light-mode .bg-black\/20{background:rgba(0,0,0,0.05) !important}
+body.light-mode .bg-black\/40{background:rgba(0,0,0,0.1) !important}
+body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
 </style>
 </head>
 <body>
@@ -71,11 +64,11 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
         <button onclick="showSection('qa')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Q&A</button>
         <button onclick="showSection('chat')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Chat</button>
         <button onclick="showSection('profile')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Profile</button>
-        <button onclick="showSection('admin')" id="admin-nav" class="hidden text-[var(--accent2)] hover:text-[var(--accent)] transition text-sm md:text-base">Admin</button>
+        <button onclick="showSection('admin')" id="admin-nav" class="hidden text-[var(--accent2)] hover:text-white transition text-sm md:text-base">Admin</button>
         
         <!-- Theme Toggle Button -->
-        <button onclick="toggleTheme()" id="theme-toggle" class="text-[var(--fg)] hover:text-[var(--accent)] transition text-xl">
-            <i class="fas fa-sun" id="theme-icon"></i>
+        <button onclick="toggleTheme()" id="theme-btn" class="text-xl text-[var(--accent)] hover:text-[var(--accent2)] transition">
+            <i class="fas fa-moon"></i>
         </button>
 
         <button onclick="toggleAuth()" id="auth-btn" class="btn-primary">Login</button>
@@ -90,9 +83,9 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
         <div class="text-center py-20 relative z-10">
             <h2 class="text-4xl md:text-6xl font-grotesk font-bold mb-6 leading-tight">
                 <span class="text-[var(--accent)]">Science</span> Project Hub<br>
-                <span class="text-2xl md:text-3xl text-muted">A/L 2026 - 2028</span>
+                <span class="text-2xl md:text-3xl text-[var(--muted)]">A/L 2028</span>
             </h2>
-            <p class="max-w-2xl mx-auto text-lg text-muted mb-8">
+            <p class="max-w-2xl mx-auto text-lg text-gray-400 mb-8">
                 An interactive platform for students and teachers to collaborate, share resources, and explore science.
             </p>
             <button onclick="toggleAuth()" class="btn-primary text-lg px-8 py-3">Get Started</button>
@@ -105,18 +98,32 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
         <div id="batch-grid" class="grid md:grid-cols-3 gap-6"></div>
     </section>
 
+    <!-- Batch Categories Section (New) -->
+    <section id="batch-categories" class="section hidden">
+        <button onclick="showSection('batches')" class="mb-6 text-gray-400 hover:text-[var(--accent)] flex items-center gap-2 transition">
+            <i class="fas fa-arrow-left"></i> Back to Batches
+        </button>
+        <h2 id="cat-section-title" class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Select a Category</h2>
+        <div id="cat-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+    </section>
+
     <!-- Q&A Section -->
     <section id="qa" class="section hidden">
+        <button onclick="showSection('batches')" class="mb-6 text-gray-400 hover:text-[var(--accent)] flex items-center gap-2 transition">
+            <i class="fas fa-arrow-left"></i> Back to Batches
+        </button>
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <h2 class="text-3xl font-grotesk font-bold border-l-4 border-[var(--accent)] pl-4">Questions & Answers</h2>
             <button onclick="document.getElementById('ask-modal').classList.remove('hidden')" class="btn-primary"><i class="fas fa-plus mr-2"></i>Ask Question</button>
         </div>
         
+        <!-- Filters and Search -->
         <div class="flex flex-col md:flex-row gap-4 mb-6">
-            <select id="qa-filter" onchange="renderQuestions()" class="md:w-1/3"></select>
-            <select id="qa-cat-filter" onchange="renderQuestions()" class="md:w-1/3">
+            <select id="qa-filter" onchange="renderQuestions()" class="md:w-1/4"></select>
+            <select id="qa-cat-filter" onchange="renderQuestions()" class="md:w-1/4">
                 <option value="">All Categories</option>
             </select>
+            <input type="text" id="qa-search" placeholder="Search by text or file name..." oninput="renderQuestions()" class="md:w-1/2">
         </div>
         
         <div id="qa-list" class="space-y-4"></div>
@@ -134,7 +141,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
             </div>
             <div class="md:col-span-2 card p-4 flex flex-col">
                 <div id="chat-window" class="flex-1 overflow-y-auto mb-4 flex flex-col">
-                    <div class="m-auto text-muted text-center">
+                    <div class="m-auto text-gray-500 text-center">
                         <i class="fas fa-comments text-4xl mb-4 block"></i>
                         Select a chat to start messaging
                     </div>
@@ -157,7 +164,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
             </div>
             <div class="card p-6">
                 <h3 class="text-xl font-bold mb-4 text-[var(--accent)]">Start a New Chat</h3>
-                <p class="text-sm text-muted mb-4">Click to send a chat request. You can chat once they accept.</p>
+                <p class="text-sm text-gray-400 mb-4">Click to send a chat request. You can chat once they accept.</p>
                 <div id="users-list" class="space-y-2 max-h-96 overflow-y-auto"></div>
             </div>
         </div>
@@ -188,18 +195,18 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
 
             <div class="card p-6 md:col-span-2 lg:col-span-1">
                 <h3 class="text-xl font-bold mb-4 text-[var(--accent2)]">Monitor Personal Chats</h3>
-                <p class="text-sm text-muted mb-4">Select two users to view their private conversation.</p>
+                <p class="text-sm text-gray-400 mb-4">Select two users to view their private conversation.</p>
                 <div class="flex flex-col gap-2 mb-4">
                     <select id="admin-user1"></select>
                     <select id="admin-user2"></select>
                     <button onclick="adminViewChat()" class="btn-primary">View Chat</button>
                 </div>
-                <div id="admin-chat-window" class="h-48 overflow-y-auto bg-subtle p-4 rounded flex flex-col"></div>
+                <div id="admin-chat-window" class="h-48 overflow-y-auto bg-black/20 p-4 rounded flex flex-col"></div>
             </div>
 
             <div class="card p-6 md:col-span-2 lg:col-span-3">
                 <h3 class="text-xl font-bold mb-4 text-[var(--accent2)]">Manage User Roles & Accounts</h3>
-                <p class="text-sm text-muted mb-4">Assign roles or delete users from the database.</p>
+                <p class="text-sm text-gray-400 mb-4">Assign roles or delete users from the database.</p>
                 <div id="admin-user-list" class="space-y-2 max-h-96 overflow-y-auto"></div>
             </div>
 
@@ -210,21 +217,21 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
 <!-- Auth Modal -->
 <div id="auth-modal" class="modal-bg hidden">
     <div class="card p-8 w-full max-w-md relative">
-        <button onclick="toggleAuth()" class="absolute top-4 right-4 text-muted hover:text-[var(--fg)]"><i class="fas fa-times"></i></button>
+        <button onclick="toggleAuth()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
         <h2 id="auth-title" class="text-2xl font-bold mb-6 text-[var(--accent)]">Login</h2>
         <div class="space-y-4">
             <div id="signup-fields" class="hidden space-y-4">
                 <input id="name" type="text" placeholder="Full Name">
                 <input id="phone" type="text" placeholder="Phone Number">
                 <input id="whatsapp" type="text" placeholder="WhatsApp Number">
-                <p class="text-xs text-muted">Note: All new accounts default to "Student" role. An Admin will assign Teacher/Admin roles if needed.</p>
+                <p class="text-xs text-gray-500">Note: All new accounts default to "Student" role. An Admin will assign Teacher/Admin roles if needed.</p>
             </div>
             <input id="email" type="email" placeholder="Email Address" required>
             <input id="password" type="password" placeholder="Password" required>
             <button onclick="handleAuth()" class="btn-primary w-full"><span id="auth-btn-text">Login</span></button>
-            <p class="text-center text-sm text-muted">
+            <p class="text-center text-sm text-gray-400">
                 <span id="auth-toggle-text">Don't have an account?</span> 
-                <a href="#" onclick="switchAuthMode()" class="link-text"><span id="auth-toggle-link">Sign Up</span></a>
+                <a href="#" onclick="switchAuthMode()" class="text-[var(--accent)]"><span id="auth-toggle-link">Sign Up</span></a>
             </p>
             <p id="auth-error" class="text-red-500 text-sm text-center hidden"></p>
         </div>
@@ -234,7 +241,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
 <!-- Ask Question Modal -->
 <div id="ask-modal" class="modal-bg hidden">
     <div class="card p-8 w-full max-w-lg relative">
-        <button onclick="document.getElementById('ask-modal').classList.add('hidden')" class="absolute top-4 right-4 text-muted hover:text-[var(--fg)]"><i class="fas fa-times"></i></button>
+        <button onclick="document.getElementById('ask-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
         <h2 class="text-2xl font-bold mb-6 text-[var(--accent)]">Ask a Question</h2>
         <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
@@ -244,7 +251,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
             <input id="q-title" type="text" placeholder="Question Title">
             <textarea id="q-body" rows="4" placeholder="Describe your question in detail..."></textarea>
             <div>
-                <label class="text-sm text-muted">Attach Image or PDF (Max 5MB)</label>
+                <label class="text-sm text-gray-400">Attach Image or PDF (Max 5MB)</label>
                 <input type="file" id="q-file" accept="image/*, application/pdf" class="mt-2">
             </div>
             <button onclick="postQuestion()" class="btn-primary w-full">Post Question</button>
@@ -303,35 +310,6 @@ window.addEventListener('resize', () => {
 </script>
 
 <script>
-// --- THEME TOGGLE LOGIC ---
-function toggleTheme() {
-    const html = document.documentElement;
-    const icon = document.getElementById('theme-icon');
-    if (html.classList.contains('light-mode')) {
-        html.classList.remove('light-mode');
-        localStorage.setItem('theme', 'dark');
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
-    } else {
-        html.classList.add('light-mode');
-        localStorage.setItem('theme', 'light');
-        icon.classList.remove('fa-sun');
-        icon.classList.add('fa-moon');
-    }
-}
-
-// Apply saved theme on load
-if (localStorage.getItem('theme') === 'light') {
-    document.documentElement.classList.add('light-mode');
-}
-window.addEventListener('DOMContentLoaded', () => {
-    const icon = document.getElementById('theme-icon');
-    if (document.documentElement.classList.contains('light-mode')) {
-        icon.classList.remove('fa-sun');
-        icon.classList.add('fa-moon');
-    }
-});
-
 // --- FIREBASE CONFIG ---
 // REPLACE WITH YOUR ACTUAL FIREBASE CONFIG
 const firebaseConfig = {
@@ -356,6 +334,21 @@ let currentChatUser = null;
 let isLoginMode = true;
 let globalBatches = {};
 let globalCategories = {};
+let selectedBatchId = null;
+
+// --- THEME LOGIC ---
+function toggleTheme() {
+    const body = document.body;
+    const isLight = body.classList.toggle('light-mode');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    document.getElementById('theme-btn').innerHTML = isLight ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+}
+
+// Apply saved theme on load
+if(localStorage.getItem('theme') === 'light') {
+    document.body.classList.add('light-mode');
+    document.getElementById('theme-btn').innerHTML = '<i class="fas fa-sun"></i>';
+}
 
 // --- AUTH LOGIC ---
 function toggleAuth() {
@@ -486,9 +479,35 @@ function showSection(id) {
     if(id === 'admin') loadAdminData();
 }
 
-function goToBatchQA(batchId) {
+// Navigate to the Category Selection page for a specific batch
+function showBatchCategories(batchId) {
+    selectedBatchId = batchId;
+    const batchName = globalBatches[batchId]?.name || 'Batch';
+    document.getElementById('cat-section-title').innerText = batchName + ' - Select a Category';
+    
+    const grid = document.getElementById('cat-grid');
+    grid.innerHTML = '';
+    
+    for(let id in globalCategories) {
+        const c = globalCategories[id];
+        grid.innerHTML += `
+            <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px]" onclick="goToCategoryQA('${batchId}', '${id}')">
+                <i class="fas fa-book-open text-4xl text-[var(--accent)] mb-4"></i>
+                <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${c.name}</h3>
+                <p class="text-gray-400 mt-2 text-sm">Enter Q&A Section</p>
+            </div>
+        `;
+    }
+    
+    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+    document.getElementById('batch-categories').classList.remove('hidden');
+}
+
+// Navigate directly to a specific batch and category Q&A
+function goToCategoryQA(batchId, catId) {
     showSection('qa');
     document.getElementById('qa-filter').value = batchId;
+    document.getElementById('qa-cat-filter').value = catId;
     renderQuestions();
 }
 
@@ -498,12 +517,17 @@ function loadDropdowns() {
         globalBatches = snap.val() || {};
         if(!snap.exists()) {
             const defaultBatches = {
-                'batch_2026': { name: 'A/L 2026', desc: 'Science Project Batch 2026' },
-                'batch_2027': { name: 'A/L 2027', desc: 'Science Project Batch 2027' },
                 'batch_2028': { name: 'A/L 2028', desc: 'Science Project Batch 2028' }
             };
             db.ref('batches').set(defaultBatches);
             globalBatches = defaultBatches;
+        } else {
+            // Force remove old batches if they exist
+            if(globalBatches['batch_2026']) db.ref('batches/batch_2026').remove();
+            if(globalBatches['batch_2027']) db.ref('batches/batch_2027').remove();
+            if(!globalBatches['batch_2028']) {
+                db.ref('batches/batch_2028').set({ name: 'A/L 2028', desc: 'Science Project Batch 2028' });
+            }
         }
         updateBatchUI();
     });
@@ -541,16 +565,16 @@ function updateBatchUI() {
         
         if(grid) {
             grid.innerHTML += `
-                <div class="card p-6 cursor-pointer" onclick="goToBatchQA('${id}')">
+                <div class="card p-6 cursor-pointer" onclick="showBatchCategories('${id}')">
                     <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${b.name}</h3>
-                    <p class="text-muted mt-2">${b.desc || 'Science Projects & Q&A'}</p>
-                    <button class="mt-4 text-sm text-[var(--accent2)]">Enter Q&A <i class="fas fa-arrow-right ml-1"></i></button>
+                    <p class="text-gray-400 mt-2">${b.desc || 'Science Projects & Q&A'}</p>
+                    <button class="mt-4 text-sm text-[var(--accent2)]">View Categories <i class="fas fa-arrow-right ml-1"></i></button>
                 </div>
             `;
         }
         if(currentUserData?.role === 'Admin' && adminList) {
             adminList.innerHTML += `
-                <div class="flex justify-between items-center bg-subtle p-2 rounded">
+                <div class="flex justify-between items-center bg-black/20 p-2 rounded">
                     <input value="${b.name}" id="batch-name-${id}" class="bg-transparent border-none">
                     <div>
                         <button onclick="editBatch('${id}')" class="text-yellow-500 px-2"><i class="fas fa-edit"></i></button>
@@ -577,7 +601,7 @@ function updateCategoryUI() {
         if(qCat) qCat.innerHTML += `<option value="${id}">${c.name}</option>`;
         if(currentUserData?.role === 'Admin' && adminCatList) {
             adminCatList.innerHTML += `
-                <div class="flex justify-between items-center bg-subtle p-2 rounded">
+                <div class="flex justify-between items-center bg-black/20 p-2 rounded">
                     <input value="${c.name}" id="cat-name-${id}" class="bg-transparent border-none">
                     <div>
                         <button onclick="editCategory('${id}')" class="text-yellow-500 px-2"><i class="fas fa-edit"></i></button>
@@ -635,8 +659,9 @@ function postQuestion() {
 function renderQuestions() {
     const filterBatch = document.getElementById('qa-filter').value;
     const filterCat = document.getElementById('qa-cat-filter').value;
+    const searchText = (document.getElementById('qa-search')?.value || "").toLowerCase();
     const list = document.getElementById('qa-list');
-    list.innerHTML = '<div class="text-muted">Loading...</div>';
+    list.innerHTML = '<div class="text-gray-500">Loading...</div>';
 
     db.ref('questions').on('value', snap => {
         const questions = snap.val() || {};
@@ -648,6 +673,24 @@ function renderQuestions() {
         for(let [id, q] of sortedQuestions) {
             if(filterBatch && q.batch !== filterBatch) continue;
             if(filterCat && q.category !== filterCat) continue;
+            
+            // Search logic
+            if(searchText) {
+                const titleMatch = q.title.toLowerCase().includes(searchText);
+                const bodyMatch = q.body.toLowerCase().includes(searchText);
+                const fileMatch = q.fileName && q.fileName.toLowerCase().includes(searchText);
+                let replyFileMatch = false;
+                if(q.replies) {
+                    for(let rId in q.replies) {
+                        if(q.replies[rId].fileName && q.replies[rId].fileName.toLowerCase().includes(searchText)) {
+                            replyFileMatch = true;
+                            break;
+                        }
+                    }
+                }
+                if(!titleMatch && !bodyMatch && !fileMatch && !replyFileMatch) continue;
+            }
+            
             found = true;
             
             const batchName = globalBatches[q.batch]?.name || 'Unknown Batch';
@@ -661,11 +704,11 @@ function renderQuestions() {
                     repliesHtml += `
                         <div class="mt-3 pl-4 border-l-2 border-[var(--muted)]">
                             <div class="flex justify-between items-center">
-                                <p class="text-sm text-[var(--accent2)]">${r.authorName} <span class="text-muted">(${r.authorRole})</span></p>
+                                <p class="text-sm text-[var(--accent2)]">${r.authorName} <span class="text-gray-500">(${r.authorRole})</span></p>
                                 ${canDeleteReply ? `<button onclick="deleteReply('${id}', '${rId}')" class="text-red-500 text-xs hover:text-red-400"><i class="fas fa-trash"></i></button>` : ''}
                             </div>
-                            ${r.text ? `<p class="text-muted mt-1">${r.text}</p>` : ''}
-                            ${r.file ? `<a href="${r.file}" download="${r.fileName || 'file'}" class="link-text underline text-sm mt-1 inline-block"><i class="fas fa-paperclip"></i> ${r.fileName || 'View Attachment'}</a>` : ''}
+                            ${r.text ? `<p class="text-gray-300 mt-1">${r.text}</p>` : ''}
+                            ${r.file ? `<a href="${r.file}" download="${r.fileName || 'file'}" class="text-blue-400 underline text-sm mt-1 inline-block"><i class="fas fa-paperclip"></i> ${r.fileName || 'View Attachment'}</a>` : ''}
                         </div>
                     `;
                 }
@@ -683,15 +726,15 @@ function renderQuestions() {
                             ${canDeleteQ ? `<button onclick="deleteQuestion('${id}')" class="btn-danger text-xs px-2 py-1"><i class="fas fa-trash"></i> Delete</button>` : ''}
                         </div>
                     </div>
-                    <p class="text-muted mb-3">${q.body}</p>
-                    ${q.file ? `<a href="${q.file}" download="${q.fileName || 'file'}" class="link-text underline text-sm mb-3 inline-block"><i class="fas fa-paperclip"></i> ${q.fileName || 'View Attachment'}</a>` : ''}
-                    <p class="text-sm text-muted">Asked by ${q.authorName} (${q.authorRole})</p>
+                    <p class="text-gray-400 mb-3">${q.body}</p>
+                    ${q.file ? `<a href="${q.file}" download="${q.fileName || 'file'}" class="text-blue-400 underline text-sm mb-3 inline-block"><i class="fas fa-paperclip"></i> ${q.fileName || 'View Attachment'}</a>` : ''}
+                    <p class="text-sm text-gray-500">Asked by ${q.authorName} (${q.authorRole})</p>
                     
                     <div class="replies-section mt-4">
                         ${repliesHtml}
                     </div>
                     
-                    <div class="mt-4 p-3 bg-subtle rounded-lg flex flex-col md:flex-row gap-2 items-start">
+                    <div class="mt-4 p-3 bg-black/20 rounded-lg flex flex-col md:flex-row gap-2 items-start">
                         <textarea id="reply-input-${id}" placeholder="Type your reply here..." rows="2" class="flex-1 w-full bg-transparent"></textarea>
                         <div class="flex gap-2 w-full md:w-auto items-center">
                             <input type="file" id="file-input-${id}" accept="image/*, application/pdf" class="text-xs border-none w-full md:w-auto">
@@ -701,7 +744,7 @@ function renderQuestions() {
                 </div>
             `;
         }
-        if(!found) list.innerHTML = '<div class="text-muted">No questions found for this filter. Be the first to ask!</div>';
+        if(!found) list.innerHTML = '<div class="text-gray-500">No questions found matching your search or filter.</div>';
     });
 }
 
@@ -768,10 +811,10 @@ function loadUsers() {
             
             if(uid !== currentUser.uid && list) {
                 list.innerHTML += `
-                    <div class="flex justify-between items-center bg-subtle p-2 rounded">
+                    <div class="flex justify-between items-center bg-black/20 p-2 rounded">
                         <div>
                             <p class="font-semibold">${u.name}</p>
-                            <p class="text-xs text-muted">${u.role}</p>
+                            <p class="text-xs text-gray-500">${u.role}</p>
                         </div>
                         <button onclick="sendChatRequest('${uid}')" class="text-xs btn-primary px-2 py-1">Request Chat</button>
                     </div>
@@ -781,10 +824,10 @@ function loadUsers() {
             if(currentUserData?.role === 'Admin') {
                 if(adminUserList) {
                     adminUserList.innerHTML += `
-                        <div class="flex flex-col md:flex-row justify-between items-center bg-subtle p-2 rounded gap-2">
+                        <div class="flex flex-col md:flex-row justify-between items-center bg-black/20 p-2 rounded gap-2">
                             <div class="flex-1">
                                 <p class="font-semibold">${u.name} ${uid === currentUser.uid ? '(You)' : ''}</p>
-                                <p class="text-xs text-muted">${u.email}</p>
+                                <p class="text-xs text-gray-500">${u.email}</p>
                             </div>
                             <div class="flex gap-2 items-center">
                                 <select onchange="updateUserRole('${uid}', this.value)" class="w-full md:w-40">
@@ -840,11 +883,11 @@ function loadChatLists() {
             const r = requests[id];
             if(r.to === currentUser.uid && r.status === 'pending') {
                 if(reqList) reqList.innerHTML += `
-                    <div class="bg-subtle p-2 rounded flex justify-between items-center">
+                    <div class="bg-black/20 p-2 rounded flex justify-between items-center">
                         <span class="text-sm">${r.fromName}</span>
                         <div class="flex gap-1">
-                            <button onclick="acceptReq('${id}')" class="bg-green-600 px-2 py-1 rounded text-xs text-white">Accept</button>
-                            <button onclick="declineReq('${id}')" class="bg-red-600 px-2 py-1 rounded text-xs text-white">Decline</button>
+                            <button onclick="acceptReq('${id}')" class="bg-green-600 px-2 py-1 rounded text-xs">Accept</button>
+                            <button onclick="declineReq('${id}')" class="bg-red-600 px-2 py-1 rounded text-xs">Decline</button>
                         </div>
                     </div>
                 `;
@@ -853,9 +896,9 @@ function loadChatLists() {
                 db.ref('users/' + otherId).once('value', uSnap => {
                     const u = uSnap.val();
                     if(u && chatList) chatList.innerHTML += `
-                        <div onclick="openChat('${otherId}', '${u.name}')" class="p-2 bg-subtle rounded cursor-pointer hover:bg-[var(--bg2)]">
+                        <div onclick="openChat('${otherId}', '${u.name}')" class="p-2 bg-black/20 rounded cursor-pointer hover:bg-black/40">
                             <p class="font-semibold">${u.name}</p>
-                            <p class="text-xs text-muted">${u.role}</p>
+                            <p class="text-xs text-gray-500">${u.role}</p>
                         </div>
                     `;
                 });
@@ -875,20 +918,20 @@ function openChat(otherId, otherName) {
     if(chatListener) chatListener.off();
     
     const win = document.getElementById('chat-window');
-    win.innerHTML = `<div class="text-center text-muted border-b pb-2 mb-2 w-full border-[var(--border)]">${otherName}</div>`;
+    win.innerHTML = `<div class="text-center text-gray-500 border-b pb-2 mb-2 w-full">${otherName}</div>`;
     document.getElementById('chat-input-area').classList.remove('hidden');
     
     chatListener = db.ref('chats/' + chatId);
     chatListener.on('value', snap => {
         const msgs = snap.val() || {};
-        win.innerHTML = `<div class="text-center text-muted border-b pb-2 mb-2 w-full border-[var(--border)]">${otherName}</div>`;
+        win.innerHTML = `<div class="text-center text-gray-500 border-b pb-2 mb-2 w-full">${otherName}</div>`;
         
         const canDeleteMsg = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
         
         for(let id in msgs) {
             const m = msgs[id];
             const cls = m.sender === currentUser.uid ? 'chat-me' : 'chat-them';
-            const deleteBtn = canDeleteMsg ? `<button onclick="deleteChatMsg('${id}')" class="absolute -top-2 -right-2 bg-red-600 rounded-full w-5 h-5 text-xs hidden group-hover:block text-white">x</button>` : '';
+            const deleteBtn = canDeleteMsg ? `<button onclick="deleteChatMsg('${id}')" class="absolute -top-2 -right-2 bg-red-600 rounded-full w-5 h-5 text-xs hidden group-hover:block">x</button>` : '';
             win.innerHTML += `<div class="chat-msg ${cls} group">${m.text} ${deleteBtn}</div>`;
         }
         win.scrollTop = win.scrollHeight;
@@ -959,12 +1002,12 @@ function adminViewChat() {
     
     const chatId = [u1, u2].sort().join('_');
     const win = document.getElementById('admin-chat-window');
-    win.innerHTML = '<div class="text-muted">Loading...</div>';
+    win.innerHTML = '<div class="text-gray-500">Loading...</div>';
     
     db.ref('chats/' + chatId).once('value').then(snap => {
         const msgs = snap.val() || {};
         win.innerHTML = '';
-        if(Object.keys(msgs).length === 0) win.innerHTML = '<div class="text-muted">No messages found between these users.</div>';
+        if(Object.keys(msgs).length === 0) win.innerHTML = '<div class="text-gray-500">No messages found between these users.</div>';
         
         const u1Name = document.getElementById('admin-user1').selectedOptions[0].text.split(' (')[0];
         const u2Name = document.getElementById('admin-user2').selectedOptions[0].text.split(' (')[0];
