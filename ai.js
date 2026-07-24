@@ -8,7 +8,7 @@ let globalCategories = {};
 let selectedBatchId = null;
 
 // Replace the placeholder below with your key starting with AIzaSy
-const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
+const GEMINI_API_KEY = "AQ.Ab8RN6ITSuF0vOGIPdcHvzcO5K0Q510S5dQ1LgVMQwduxuKWmw";
 
 // --- AI TUTOR DIRECT GEMINI API LOGIC ---
 async function askAITutor() {
@@ -26,7 +26,7 @@ async function askAITutor() {
     windowEl.scrollTop = windowEl.scrollHeight;
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${AQ.Ab8RN6ITSuF0vOGIPdcHvzcO5K0Q510S5dQ1LgVMQwduxuKWmw}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
