@@ -36,9 +36,7 @@ body.light-mode .modal-bg{background:rgba(0,0,0,0.5)}
 .chat-msg{max-width:75%;padding:10px 14px;border-radius:12px;margin-bottom:8px;word-wrap:break-word;position:relative}
 .chat-me{background:var(--accent);color:#000;align-self:flex-end;border-bottom-right-radius:2px}
 .chat-them{background:rgba(255,255,255,0.1);color:#fff;align-self:flex-start;border-bottom-left-radius:2px}
-.chat-ai{background:rgba(0,232,157,0.15);border:1px solid var(--accent);color:#fff;align-self:flex-start;border-bottom-left-radius:2px}
 body.light-mode .chat-them{background:rgba(0,0,0,0.1);color:#000}
-body.light-mode .chat-ai{background:rgba(0,153,99,0.1);color:#000}
 .tag{font-size:0.75rem;padding:2px 8px;border-radius:4px;background:var(--bg2);color:var(--muted)}
 .tag-cat{background:rgba(255,194,51,0.2);color:var(--accent2)}
 
@@ -64,9 +62,6 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
         <button onclick="showSection('home')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Home</button>
         <button onclick="showSection('batches')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Batches</button>
         <button onclick="showSection('qa')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Q&A</button>
-        <button onclick="showSection('ai-tutor')" class="hover:text-[var(--accent)] text-[var(--accent)] font-semibold transition text-sm md:text-base flex items-center gap-1">
-            <i class="fas fa-robot"></i> AI Tutor
-        </button>
         <button onclick="showSection('chat')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Chat</button>
         <button onclick="showSection('profile')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Profile</button>
         <button onclick="showSection('admin')" id="admin-nav" class="hidden text-[var(--accent2)] hover:text-white transition text-sm md:text-base">Admin</button>
@@ -91,14 +86,9 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
                 <span class="text-2xl md:text-3xl text-[var(--muted)]">A/L 2028</span>
             </h2>
             <p class="max-w-2xl mx-auto text-lg text-gray-400 mb-8">
-                An interactive platform for students and teachers to collaborate, share resources, and explore science with our integrated AI Tutor.
+                An interactive platform for students and teachers to collaborate, share resources, and explore science.
             </p>
-            <div class="flex justify-center gap-4 flex-wrap">
-                <button onclick="toggleAuth()" class="btn-primary text-lg px-8 py-3">Get Started</button>
-                <button onclick="showSection('ai-tutor')" class="card px-8 py-3 text-lg text-[var(--accent)] hover:border-[var(--accent)] transition flex items-center gap-2">
-                    <i class="fas fa-robot"></i> Ask AI Tutor
-                </button>
-            </div>
+            <button onclick="toggleAuth()" class="btn-primary text-lg px-8 py-3">Get Started</button>
         </div>
     </section>
 
@@ -108,38 +98,13 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
         <div id="batch-grid" class="grid md:grid-cols-3 gap-6"></div>
     </section>
 
-    <!-- Batch Categories Section -->
+    <!-- Batch Categories Section (New) -->
     <section id="batch-categories" class="section hidden">
         <button onclick="showSection('batches')" class="mb-6 text-gray-400 hover:text-[var(--accent)] flex items-center gap-2 transition">
             <i class="fas fa-arrow-left"></i> Back to Batches
         </button>
         <h2 id="cat-section-title" class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Select a Category</h2>
         <div id="cat-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
-    </section>
-
-    <!-- AI Tutor Section (NEW) -->
-    <section id="ai-tutor" class="section hidden">
-        <h2 class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Zahira Science AI Assistant</h2>
-        <div class="card p-6 max-w-4xl mx-auto flex flex-col h-[70vh]">
-            <div class="flex items-center gap-3 border-b border-[var(--border)] pb-4 mb-4">
-                <i class="fas fa-robot text-3xl text-[var(--accent)]"></i>
-                <div>
-                    <h3 class="font-bold text-lg">AI Science Tutor</h3>
-                    <p class="text-xs text-gray-400">Ask any physics, chemistry, or biology question for instant explanations.</p>
-                </div>
-            </div>
-            <div id="ai-chat-window" class="flex-1 overflow-y-auto mb-4 flex flex-col gap-3 p-2">
-                <div class="chat-msg chat-ai">
-                    👋 <strong>Hello!</strong> I am your AI Science Assistant for Zahira College Mawanella. How can I help you with your A/L science studies today?
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <input id="ai-chat-input" placeholder="Type your science question here..." onkeypress="if(event.key==='Enter')askAITutor()" class="flex-1">
-                <button onclick="askAITutor()" id="ai-send-btn" class="btn-primary flex items-center gap-2">
-                    <i class="fas fa-paper-plane"></i> Ask AI
-                </button>
-            </div>
-        </div>
     </section>
 
     <!-- Q&A Section -->
@@ -346,6 +311,7 @@ window.addEventListener('resize', () => {
 
 <script>
 // --- FIREBASE CONFIG ---
+// REPLACE WITH YOUR ACTUAL FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyDDk_xiDvdcAv_B5oSogFH50azgLBVszKY",
   authDomain: "e-learing-9adc3.firebaseapp.com",
@@ -369,65 +335,6 @@ let isLoginMode = true;
 let globalBatches = {};
 let globalCategories = {};
 let selectedBatchId = null;
-
-// --- AI TUTOR API LOGIC ---
-async function askAITutor() {
-    const input = document.getElementById("ai-chat-input");
-    const windowEl = document.getElementById("ai-chat-window");
-    const sendBtn = document.getElementById("ai-send-btn");
-    const prompt = input.value.trim();
-
-    if (!prompt) return;
-
-    // Display user's question
-    windowEl.innerHTML += `<div class="chat-msg chat-me">${prompt}</div>`;
-    input.value = "";
-    sendBtn.disabled = true;
-    sendBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Thinking...`;
-    windowEl.scrollTop = windowEl.scrollHeight;
-
-    try {
-        const response = await fetch("/api/ai", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: prompt }),
-        });
-
-        const data = await response.json();
-        const aiText = data.text || "Sorry, I couldn't process that question right now.";
-        
-        windowEl.innerHTML += `<div class="chat-msg chat-ai">🤖 <strong>AI Tutor:</strong><br>${aiText}</div>`;
-    } catch (err) {
-        windowEl.innerHTML += `<div class="chat-msg chat-ai text-red-400">Error connecting to AI backend.</div>`;
-    } finally {
-        sendBtn.disabled = false;
-        sendBtn.innerHTML = `<i class="fas fa-paper-plane"></i> Ask AI`;
-        windowEl.scrollTop = windowEl.scrollHeight;
-    }
-}
-
-// Optional AI Helper inside the Q&A thread
-async function askAIForQuestion(qId, questionTitle, questionBody) {
-    const inputArea = document.getElementById(`reply-input-${qId}`);
-    const prompt = `Student asked: "${questionTitle}". Context: "${questionBody}". Give a concise science explanation.`;
-
-    inputArea.value = "🤖 Asking AI Tutor for an automated answer...";
-
-    try {
-        const response = await fetch("/api/ai", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: prompt }),
-        });
-
-        const data = await response.json();
-        if (data.text) {
-            inputArea.value = `🤖 [AI Generated Explanation]:\n${data.text}`;
-        }
-    } catch (err) {
-        inputArea.value = "Error fetching AI response.";
-    }
-}
 
 // --- THEME LOGIC ---
 function toggleTheme() {
@@ -615,6 +522,7 @@ function loadDropdowns() {
             db.ref('batches').set(defaultBatches);
             globalBatches = defaultBatches;
         } else {
+            // Force remove old batches if they exist
             if(globalBatches['batch_2026']) db.ref('batches/batch_2026').remove();
             if(globalBatches['batch_2027']) db.ref('batches/batch_2027').remove();
             if(!globalBatches['batch_2028']) {
@@ -766,6 +674,7 @@ function renderQuestions() {
             if(filterBatch && q.batch !== filterBatch) continue;
             if(filterCat && q.category !== filterCat) continue;
             
+            // Search logic
             if(searchText) {
                 const titleMatch = q.title.toLowerCase().includes(searchText);
                 const bodyMatch = q.body.toLowerCase().includes(searchText);
@@ -806,9 +715,7 @@ function renderQuestions() {
             }
 
             const canDeleteQ = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
-            const safeTitle = q.title.replace(/'/g, "\\'");
-            const safeBody = q.body.replace(/'/g, "\\'");
-
+            
             list.innerHTML += `
                 <div class="card p-5">
                     <div class="flex flex-wrap justify-between items-start mb-2 gap-2">
@@ -816,9 +723,6 @@ function renderQuestions() {
                         <div class="flex gap-2 items-center">
                             <span class="tag">${batchName}</span>
                             <span class="tag tag-cat">${catName}</span>
-                            <button onclick="askAIForQuestion('${id}', '${safeTitle}', '${safeBody}')" class="text-xs btn-primary px-2 py-1 flex items-center gap-1">
-                                <i class="fas fa-robot"></i> Ask AI Helper
-                            </button>
                             ${canDeleteQ ? `<button onclick="deleteQuestion('${id}')" class="btn-danger text-xs px-2 py-1"><i class="fas fa-trash"></i> Delete</button>` : ''}
                         </div>
                     </div>
