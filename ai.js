@@ -59,3 +59,8 @@ async function askAITutor() {
 
 // Expose askAITutor globally so onclick="askAITutor()" works with script type="module"
 window.askAITutor = askAITutor;
+// Attach all HTML button handlers to window
+window.askAITutor = askAITutor;
+window.toggleTheme = toggleTheme;      // Replace/add your actual function names
+window.switchTab = switchTab;          // Replace/add your actual function names
+window.handleLogin = handleLogin;      // Replace/add your actual function names
