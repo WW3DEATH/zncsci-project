@@ -415,11 +415,12 @@ function logout() {
     showSection('home');
 }
 
-// --- MANDATORY NOTIFICATION LOGIC ---
+// --- NOTIFICATION LOGIC (Fixed for Android WebView) ---
 function checkAndRequestNotificationPermission(user) {
     if (!("Notification" in window)) {
-        alert("Your browser does not support desktop notifications. You cannot use this app.");
-        auth.signOut();
+        // If the device doesn't support web notifications (like Android WebView), 
+        // we skip the requirement and let the user in.
+        initUserApp(user);
         return;
     }
 
@@ -447,16 +448,18 @@ function checkAndRequestNotificationPermission(user) {
 function initUserApp(user) {
     currentUser = user;
     
-    // Setup Notification Listener
-    db.ref('notifications/' + user.uid).on('child_added', snap => {
-        const notif = snap.val();
-        if (notif) {
-            try {
-                new Notification(notif.title, { body: notif.body });
-            } catch(e) { console.log("Notification error", e); }
-            snap.ref.remove(); // Delete after firing
-        }
-    });
+    // Setup Notification Listener (Only if supported and granted)
+    if ("Notification" in window && Notification.permission === "granted") {
+        db.ref('notifications/' + user.uid).on('child_added', snap => {
+            const notif = snap.val();
+            if (notif) {
+                try {
+                    new Notification(notif.title, { body: notif.body });
+                } catch(e) { console.log("Notification error", e); }
+                snap.ref.remove(); // Delete after firing
+            }
+        });
+    }
 
     db.ref('users/' + user.uid).on('value', snap => {
         currentUserData = snap.val();
