@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize the SDK with your API key
-const genAI = new GoogleGenerativeAI("AQ.Ab8RN6KCXqts6DpBQ48UccmrnPZbj5LHpRQ0J1oyeQAs3bsFMQ");
+const genAI = new GoogleGenerativeAI("AQ.Ab8RN6ITSuF0vOGIPdcHvzcO5K0Q510S5dQ1LgVMQwduxuKWmw");
 
 async function generateResponse() {
   // Use the active Gemini Flash model endpoint
