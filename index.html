@@ -55,7 +55,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
 .hidden{display:none !important}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(5px);z-index:50;display:flex;align-items:center;justify-content:center;padding:1rem}
 body.light-mode .modal-bg{background:rgba(0,0,0,0.5)}
-.chat-msg{max-width:75%;padding:10px 14px;border-radius:12px;margin-bottom:8px;word-wrap:break-word;position:relative;white-space:pre-wrap;overflow-wrap:break-word}
+.chat-msg{max-width:70%;padding:8px 12px;border-radius:10px;margin-bottom:8px;word-wrap:break-word;position:relative;white-space:pre-wrap;overflow-wrap:break-word}
 .chat-me{background:var(--accent);color:#000;align-self:flex-end;border-bottom-right-radius:2px}
 .chat-them{background:rgba(255,255,255,0.1);color:#fff;align-self:flex-start;border-bottom-left-radius:2px}
 body.light-mode .chat-them{background:rgba(0,0,0,0.1);color:#000}
@@ -304,7 +304,7 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
 
 <div id="ask-modal" class="modal-bg hidden">
     <div class="card p-8 w-full max-w-lg relative">
-        <button onclick="document.getElementById('ask-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+        <button onclick="document.getElementById('ask-modal').classList.remove('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
         <h2 class="text-2xl font-bold mb-6 text-[var(--accent)]">Ask a Question</h2>
         <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
@@ -401,7 +401,9 @@ let selectedBatchId = null;
 let allUsers = {};
 let allChatRequests = {};
 let globalChats = {};
+let globalGroupChats = {};
 let globalQuestionsCount = {};
+let globalGroupUnreadCount = {};
 
 // --- AI TUTOR LOGIC ---
 let aiMessages = [];
@@ -600,6 +602,9 @@ function openGroupChat(batchId, catId, catName) {
     const win = document.getElementById('gc-window');
     win.innerHTML = '<div class="m-auto text-gray-500">Loading messages...</div>';
     
+    // Mark messages as read immediately
+    db.ref('users/' + currentUser.uid + '/lastReadGroup/' + currentGroupChatId).set(Date.now());
+    
     groupChatListener = db.ref('groupChats/' + currentGroupChatId);
     groupChatListener.on('value', snap => {
         const msgs = snap.val() || {};
@@ -651,6 +656,22 @@ function sendGroupMessage() {
 // --- END GROUP CHAT LOGIC ---
 
 // --- NOTIFICATION LOGIC ---
+function calculateGroupUnread() {
+    if(!currentUser) return;
+    globalGroupUnreadCount = {};
+    const lastReadGroup = currentUserData?.lastReadGroup || {};
+    for(let groupId in globalGroupChats) {
+        let count = 0;
+        for(let mId in globalGroupChats[groupId]) {
+            const m = globalGroupChats[groupId][mId];
+            if(m.sender !== currentUser.uid && m.timestamp > (lastReadGroup[groupId] || 0)) {
+                count++;
+            }
+        }
+        globalGroupUnreadCount[groupId] = count;
+    }
+}
+
 function recalculateNotifications() {
     if(!currentUser) return;
     
@@ -676,7 +697,10 @@ function recalculateNotifications() {
         }
     }
     
-    const total = pendingReqs + unread;
+    let groupUnread = 0;
+    for(let id in globalGroupUnreadCount) groupUnread += globalGroupUnreadCount[id];
+    
+    const total = pendingReqs + unread + groupUnread;
     const badge = document.getElementById('chat-badge');
     
     if(total > 0) {
@@ -774,8 +798,11 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
             currentUserData = snap.val();
             if(currentUserData) {
                 updateUIForUser();
+                calculateGroupUnread();
                 if(!document.getElementById('home').classList.contains('hidden')) showSection('batches');
-                recalculateNotifications(); // Recalculate when user data (like lastRead) changes
+                recalculateNotifications(); 
+                if(!document.getElementById('batch-categories').classList.contains('hidden') && selectedBatchId) showBatchCategories(selectedBatchId);
+                if(!document.getElementById('batches').classList.contains('hidden')) updateBatchUI();
             }
         });
         
@@ -793,6 +820,13 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
         db.ref('chats').on('value', snap => { 
             globalChats = snap.val() || {}; 
             recalculateNotifications(); 
+        });
+        db.ref('groupChats').on('value', snap => {
+            globalGroupChats = snap.val() || {};
+            calculateGroupUnread();
+            recalculateNotifications();
+            if(!document.getElementById('batch-categories').classList.contains('hidden') && selectedBatchId) showBatchCategories(selectedBatchId);
+            if(!document.getElementById('batches').classList.contains('hidden')) updateBatchUI();
         });
         db.ref('questions').on('value', snap => {
             const questions = snap.val() || {};
@@ -917,8 +951,11 @@ function showBatchCategories(batchId) {
         const c = globalCategories[id];
         
         if(batchName === 'Discussion') {
+            const groupId = `${batchId}_${id}`;
+            const unread = globalGroupUnreadCount[groupId] || 0;
             grid.innerHTML += `
-                <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px]" onclick="openGroupChat('${batchId}', '${id}', '${c.name}')">
+                <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px] relative" onclick="openGroupChat('${batchId}', '${id}', '${c.name}')">
+                    ${unread > 0 ? `<span class="absolute top-4 right-4 bg-red-600 text-white text-xs rounded-full h-6 min-w-[24px] px-2 flex items-center justify-center font-bold">${unread}</span>` : ''}
                     <i class="fas fa-users text-4xl text-[var(--accent)] mb-4"></i>
                     <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${c.name}</h3>
                     <p class="text-gray-400 mt-2 text-sm">Join Group Chat</p>
@@ -1008,8 +1045,20 @@ function updateBatchUI() {
         if(qBatch) qBatch.innerHTML += `<option value="${id}">${b.name}</option>`;
         
         if(grid) {
+            let batchBadge = '';
+            if(b.name === 'Discussion') {
+                let totalBatchUnread = 0;
+                for(let catId in globalCategories) {
+                    totalBatchUnread += (globalGroupUnreadCount[`${id}_${catId}`] || 0);
+                }
+                if(totalBatchUnread > 0) {
+                    batchBadge = `<span class="absolute top-4 right-4 bg-red-600 text-white text-xs rounded-full h-6 min-w-[24px] px-2 flex items-center justify-center font-bold">${totalBatchUnread}</span>`;
+                }
+            }
+            
             grid.innerHTML += `
-                <div class="card p-6 cursor-pointer" onclick="showBatchCategories('${id}')">
+                <div class="card p-6 cursor-pointer relative" onclick="showBatchCategories('${id}')">
+                    ${batchBadge}
                     <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${b.name}</h3>
                     <p class="text-gray-400 mt-2">${b.desc || 'Science Projects & Q&A'}</p>
                     <button class="mt-4 text-sm text-[var(--accent2)]">View Categories <i class="fas fa-arrow-right ml-1"></i></button>
