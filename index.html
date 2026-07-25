@@ -472,6 +472,7 @@ document.getElementById('ai-file-input').addEventListener('change', async functi
 async function askAI() {
     const input = document.getElementById('ai-input');
     const text = input.value.trim();
+    
     if(!text && !aiCurrentImage && !aiCurrentPdfText) return;
     
     const win = document.getElementById('ai-chat-window');
@@ -487,13 +488,29 @@ async function askAI() {
     win.innerHTML += `<div class="chat-msg chat-them" id="ai-loading"><i class="fas fa-spinner fa-spin mr-2"></i>Thinking...</div>`;
     win.scrollTop = win.scrollHeight;
 
-    // Construct the final prompt content for the API
-    let finalContent = text;
+    // Construct the text content for the API
+    let textContent = text;
     if(aiCurrentPdfText) {
-        finalContent += `\n\nPlease analyze the following PDF content and answer based on it:\n\n${aiCurrentPdfText.substring(0, 10000)}`; // Limit text size
+        textContent += `\n\nPlease analyze the following PDF content and answer based on it:\n\n${aiCurrentPdfText.substring(0, 10000)}`;
+    }
+    // Prevent empty string content which causes API errors
+    if (!textContent.trim()) {
+        textContent = "Please analyze the provided attachment.";
     }
 
-    aiMessages.push({ role: "user", content: finalContent });
+    // Construct the message object
+    let userMsg = { role: "user" };
+    if (aiCurrentImage) {
+        // Use OpenAI Vision format for images
+        userMsg.content = [
+            { type: "text", text: textContent },
+            { type: "image_url", image_url: { url: aiCurrentImage } }
+        ];
+    } else {
+        userMsg.content = textContent;
+    }
+
+    aiMessages.push(userMsg);
 
     // Keep only the last 6 messages to prevent payload from being too large
     if(aiMessages.length > 6) {
@@ -506,14 +523,8 @@ async function askAI() {
             content: "You are an expert Science Tutor for Advanced Level students. Provide clear, concise, and educational answers regarding Physics, Chemistry, and Biology. You MUST use LaTeX formatting for ALL mathematical formulas, equations, and matrices. Use \\( ... \\) for inline math and \\[ ... \\] for block math. Do not use markdown code blocks for math."
         };
         
-        let response;
-        if(aiCurrentImage) {
-            // Puter.js Vision Call: pass the image URL as the second parameter
-            response = await puter.ai.chat([systemPrompt, ...aiMessages], aiCurrentImage);
-        } else {
-            // Puter.js Text Call
-            response = await puter.ai.chat([systemPrompt, ...aiMessages]);
-        }
+        // Send to Puter
+        const response = await puter.ai.chat([systemPrompt, ...aiMessages]);
         
         // Extract reply based on Puter's response structure
         const aiReply = response.message?.content || response.content || response.text || "Sorry, I couldn't generate a response.";
@@ -523,6 +534,8 @@ async function askAI() {
             // basic markdown replacement for bold text. Newlines are handled by CSS white-space: pre-wrap;
             const formattedReply = aiReply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             win.innerHTML += `<div class="chat-msg chat-them">${formattedReply}</div>`;
+            
+            // Add assistant reply to history
             aiMessages.push({ role: "assistant", content: aiReply });
             
             // Trigger MathJax to render the new message
