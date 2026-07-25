@@ -160,8 +160,16 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
             <div id="gc-window" class="flex-1 overflow-y-auto mb-4 flex flex-col">
                 <div class="m-auto text-gray-500 text-center">Loading messages...</div>
             </div>
-            <div class="flex gap-2">
-                <input id="gc-msg" placeholder="Type your message to the group..." onkeypress="if(event.key==='Enter')sendGroupMessage()">
+            
+            <!-- File Preview Area -->
+            <div id="gc-file-preview" class="mb-2 hidden"></div>
+            
+            <div class="flex gap-2 items-center">
+                <input type="file" id="gc-file-input" accept="image/*, application/pdf" class="hidden">
+                <button onclick="document.getElementById('gc-file-input').click()" class="btn-primary px-3 py-2 text-sm" title="Upload Image or PDF (Max 5MB)">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <input id="gc-msg" placeholder="Type your message to the group..." onkeypress="if(event.key==='Enter')sendGroupMessage()" class="flex-1">
                 <button onclick="sendGroupMessage()" class="btn-primary"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
@@ -409,8 +417,8 @@ let globalGroupUnreadCount = {};
 
 // --- AI TUTOR LOGIC ---
 let aiMessages = [];
-let aiCurrentImage = null; // Stores image data URL
-let aiCurrentPdfText = null; // Stores extracted PDF text
+let aiCurrentImage = null; 
+let aiCurrentPdfText = null; 
 
 function clearAIChat() {
     aiMessages = [];
@@ -432,7 +440,6 @@ function clearAIAttachment() {
     preview.innerHTML = '';
 }
 
-// Handle File Selection for AI
 document.getElementById('ai-file-input').addEventListener('change', async function(e) {
     const file = e.target.files[0];
     if(!file) return;
@@ -444,7 +451,7 @@ document.getElementById('ai-file-input').addEventListener('change', async functi
     }
 
     const previewDiv = document.getElementById('ai-file-preview');
-    clearAIAttachment(); // Reset previous states
+    clearAIAttachment(); 
 
     if(file.type.startsWith('image/')) {
         const reader = new FileReader();
@@ -508,7 +515,6 @@ async function askAI() {
     const win = document.getElementById('ai-chat-window');
     if(win.querySelector('.m-auto')) win.innerHTML = '';
 
-    // Display user message (with attachment icon if present)
     let userDisplayText = text;
     if(aiCurrentImage) userDisplayText += (text ? " " : "") + "[Attached Image]";
     if(aiCurrentPdfText) userDisplayText += (text ? " " : "") + "[Attached PDF]";
@@ -518,20 +524,16 @@ async function askAI() {
     win.innerHTML += `<div class="chat-msg chat-them" id="ai-loading"><i class="fas fa-spinner fa-spin mr-2"></i>Thinking...</div>`;
     win.scrollTop = win.scrollHeight;
 
-    // Construct the text content for the API
     let textContent = text;
     if(aiCurrentPdfText) {
         textContent += `\n\nPlease analyze the following PDF content and answer based on it:\n\n${aiCurrentPdfText.substring(0, 10000)}`;
     }
-    // Prevent empty string content which causes API errors
     if (!textContent.trim()) {
         textContent = "Please analyze the provided attachment.";
     }
 
-    // Construct the message object
     let userMsg = { role: "user" };
     if (aiCurrentImage) {
-        // Use OpenAI Vision format for images
         userMsg.content = [
             { type: "text", text: textContent },
             { type: "image_url", image_url: { url: aiCurrentImage } }
@@ -542,7 +544,6 @@ async function askAI() {
 
     aiMessages.push(userMsg);
 
-    // Keep only the last 6 messages to prevent payload from being too large
     if(aiMessages.length > 6) {
         aiMessages = aiMessages.slice(-6);
     }
@@ -553,22 +554,14 @@ async function askAI() {
             content: "You are an expert Science Tutor for Advanced Level students. Provide clear, concise, and educational answers regarding Physics, Chemistry, and Biology. You MUST use LaTeX formatting for ALL mathematical formulas, equations, and matrices. Use \\( ... \\) for inline math and \\[ ... \\] for block math. Do not use markdown code blocks for math."
         };
         
-        // Send to Puter
         const response = await puter.ai.chat([systemPrompt, ...aiMessages]);
-        
-        // Extract reply based on Puter's response structure
         const aiReply = response.message?.content || response.content || response.text || "Sorry, I couldn't generate a response.";
         
         document.getElementById('ai-loading').remove();
         if(aiReply && aiReply.trim().length > 0) {
-            // basic markdown replacement for bold text. Newlines are handled by CSS white-space: pre-wrap;
             const formattedReply = aiReply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             win.innerHTML += `<div class="chat-msg chat-them">${formattedReply}</div>`;
-            
-            // Add assistant reply to history
             aiMessages.push({ role: "assistant", content: aiReply });
-            
-            // Trigger MathJax to render the new message
             if (window.MathJax) {
                 MathJax.typesetPromise([win.lastChild]).catch(e => console.error("MathJax error:", e));
             }
@@ -576,9 +569,7 @@ async function askAI() {
             throw new Error("Empty response from AI");
         }
         
-        // Clear attachments after sending
         clearAIAttachment();
-        
         win.scrollTop = win.scrollHeight;
     } catch (e) {
         document.getElementById('ai-loading').remove();
@@ -593,6 +584,51 @@ async function askAI() {
 let groupChatListener = null;
 let currentGroupChatId = null;
 
+function clearGCAttachment() {
+    document.getElementById('gc-file-input').value = '';
+    const preview = document.getElementById('gc-file-preview');
+    preview.classList.add('hidden');
+    preview.innerHTML = '';
+}
+
+document.getElementById('gc-file-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+    
+    if(file.size > 5 * 1024 * 1024) {
+        alert("File too large. Max 5MB.");
+        this.value = '';
+        return;
+    }
+
+    const previewDiv = document.getElementById('gc-file-preview');
+    previewDiv.innerHTML = '';
+    previewDiv.classList.remove('hidden');
+
+    if(file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            previewDiv.innerHTML = `
+                <div class="relative inline-block">
+                    <img src="${ev.target.result}" class="h-20 w-20 object-cover rounded-lg border border-[var(--accent)]">
+                    <button onclick="clearGCAttachment()" class="absolute -top-2 -right-2 bg-red-600 rounded-full w-5 h-5 text-xs text-white">x</button>
+                </div>`;
+        };
+        reader.readAsDataURL(file);
+    } else if(file.type === 'application/pdf') {
+        previewDiv.innerHTML = `
+            <div class="relative bg-black/20 p-2 rounded-lg flex items-center gap-2 max-w-xs">
+                <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+                <span class="text-sm truncate flex-1">${file.name}</span>
+                <button onclick="clearGCAttachment()" class="text-red-500 text-sm">x</button>
+            </div>`;
+    } else {
+        alert("Only images and PDFs are supported.");
+        this.value = '';
+        previewDiv.classList.add('hidden');
+    }
+});
+
 function openGroupChat(batchId, catId, catName) {
     document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
     document.getElementById('group-chat').classList.remove('hidden');
@@ -604,7 +640,6 @@ function openGroupChat(batchId, catId, catName) {
     const win = document.getElementById('gc-window');
     win.innerHTML = '<div class="m-auto text-gray-500">Loading messages...</div>';
     
-    // Mark messages as read immediately
     db.ref('users/' + currentUser.uid + '/lastReadGroup/' + currentGroupChatId).set(Date.now());
     
     groupChatListener = db.ref('groupChats/' + currentGroupChatId);
@@ -624,8 +659,21 @@ function openGroupChat(batchId, catId, catName) {
             const cls = isMe ? 'chat-me' : 'chat-them';
             const pic = m.pic || 'https://via.placeholder.com/40';
             
+            let fileHtml = '';
+            if(m.file) {
+                if(m.file.includes('data:image')) {
+                    fileHtml = `<img src="${m.file}" class="mt-2 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="window.open('${m.file}', '_blank')">`;
+                } else {
+                    fileHtml = `<a href="${m.file}" download="${m.fileName || 'file'}" class="mt-2 inline-flex items-center gap-2 text-blue-400 underline text-sm"><i class="fas fa-file-pdf"></i> ${m.fileName || 'View PDF'}</a>`;
+                }
+            }
+            
             if(isMe) {
-                win.innerHTML += `<div class="chat-msg ${cls}">${m.text}</div>`;
+                win.innerHTML += `
+                    <div class="chat-msg ${cls}">
+                        ${m.text ? `<div>${m.text}</div>` : ''}
+                        ${fileHtml}
+                    </div>`;
             } else {
                 win.innerHTML += `
                     <div class="chat-msg ${cls}">
@@ -633,7 +681,8 @@ function openGroupChat(batchId, catId, catName) {
                             <img src="${pic}" class="avatar-sm">
                             <span class="text-xs font-bold text-[var(--accent2)]">${m.name}</span>
                         </div>
-                        <div>${m.text}</div>
+                        ${m.text ? `<div>${m.text}</div>` : ''}
+                        ${fileHtml}
                     </div>`;
             }
         });
@@ -644,16 +693,37 @@ function openGroupChat(batchId, catId, catName) {
 function sendGroupMessage() {
     const input = document.getElementById('gc-msg');
     const text = input.value.trim();
-    if(!text) return;
-    
-    db.ref('groupChats/' + currentGroupChatId).push({
+    const fileInput = document.getElementById('gc-file-input');
+    const file = fileInput.files[0];
+
+    if(!text && !file) return;
+
+    const msgData = {
         sender: currentUser.uid,
         name: currentUserData.name,
         pic: currentUserData.profilePic || "",
-        text: text,
+        text: text || "",
         timestamp: Date.now()
-    });
-    input.value = '';
+    };
+
+    if(file) {
+        if(file.size > 5242880) {
+            alert("File too large. Max 5MB.");
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            msgData.file = e.target.result;
+            msgData.fileName = file.name;
+            db.ref('groupChats/' + currentGroupChatId).push(msgData);
+            input.value = '';
+            clearGCAttachment();
+        };
+        reader.readAsDataURL(file);
+    } else {
+        db.ref('groupChats/' + currentGroupChatId).push(msgData);
+        input.value = '';
+    }
 }
 // --- END GROUP CHAT LOGIC ---
 
@@ -795,7 +865,6 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
 
         currentUser = user;
         
-        // Listen to current user's data
         db.ref('users/' + user.uid).on('value', snap => {
             currentUserData = snap.val();
             if(currentUserData) {
@@ -808,7 +877,6 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
             }
         });
         
-        // Setup Global Listeners
         db.ref('users').on('value', snap => { 
             allUsers = snap.val() || {}; 
             renderUsersList(); 
@@ -839,7 +907,6 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
                     globalQuestionsCount[q.category] = (globalQuestionsCount[q.category] || 0) + 1;
                 }
             }
-            // If batch categories section is open, re-render it to show new counts
             if(!document.getElementById('batch-categories').classList.contains('hidden') && selectedBatchId) {
                 showBatchCategories(selectedBatchId);
             }
@@ -1307,7 +1374,6 @@ function renderUsersList() {
         const u = allUsers[uid];
         const pic = u.profilePic || 'https://via.placeholder.com/40';
         
-        // Render Profile User List
         if(uid !== currentUser.uid && list) {
             list.innerHTML += `
                 <div class="flex justify-between items-center bg-black/20 p-2 rounded">
@@ -1323,7 +1389,6 @@ function renderUsersList() {
             `;
         }
 
-        // Render Admin User List
         if(currentUserData.role === 'Admin') {
             if(adminUserList) {
                 adminUserList.innerHTML += `
@@ -1390,7 +1455,6 @@ function renderChatLists() {
         }
     }
 }
-// --- END USER & CHAT RENDERING ---
 
 function deleteUserAccount(uid) {
     if(confirm("Delete this user? This will remove their profile, role, and data from the database.")) {
@@ -1432,7 +1496,6 @@ function openChat(otherId, otherName, otherPic) {
         </div>`;
     document.getElementById('chat-input-area').classList.remove('hidden');
     
-    // Mark messages as read
     db.ref('users/' + currentUser.uid + '/lastRead/' + otherId).set(Date.now());
     
     chatListener = db.ref('chats/' + chatId);
