@@ -344,8 +344,7 @@ let globalBatches = {};
 let globalCategories = {};
 let selectedBatchId = null;
 
-// --- AI TUTOR LOGIC (With Provided API Key) ---
-const POLLINATIONS_API_KEY = "AQ.Ab8RN6IuL1WD2nAwsVMRSl1P6xrmD71yaUGgvyfG13ZfeWbpJQ";
+// --- AI TUTOR LOGIC (Free Endpoint with Referrer) ---
 let aiMessages = [];
 
 function clearAIChat() {
@@ -373,42 +372,41 @@ async function askAI() {
 
     aiMessages.push({ role: "user", content: text });
 
-    // Keep only the last 6 messages to prevent payload from being too large
-    if(aiMessages.length > 6) {
-        aiMessages = aiMessages.slice(-6);
+    // Keep only the last 4 messages to prevent URL from being too long
+    if(aiMessages.length > 4) {
+        aiMessages = aiMessages.slice(-4);
     }
 
+    // Construct a single string prompt with history
+    let prompt = "You are an expert Science Tutor for Advanced Level students. Provide clear, concise, and educational answers regarding Physics, Chemistry, and Biology.\n\n";
+    aiMessages.forEach(msg => {
+        if(msg.role === 'user') prompt += `Student: ${msg.content}\n`;
+        if(msg.role === 'assistant') prompt += `Tutor: ${msg.content}\n`;
+    });
+    prompt += `Tutor: `;
+
     try {
-        const response = await fetch('https://text.pollinations.ai/openai', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${POLLINATIONS_API_KEY}`
-            },
-            body: JSON.stringify({
-                messages: [
-                    { role: "system", content: "You are an expert Science Tutor for Advanced Level students. Provide clear, concise, and educational answers regarding Physics, Chemistry, and Biology." },
-                    ...aiMessages
-                ],
-                model: "openai"
-            })
-        });
+        // Using the free GET endpoint with a referrer to bypass payment/API key restrictions
+        const url = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai&referrer=zahira-science.vercel.app`;
+        const response = await fetch(url);
         
         if(!response.ok) throw new Error(`HTTP Error: ${response.status}`);
         
-        const data = await response.json();
-        const aiReply = data.choices[0].message.content;
+        const aiReply = await response.text();
         
         document.getElementById('ai-loading').remove();
-        const formattedReply = aiReply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-        win.innerHTML += `<div class="chat-msg chat-them">${formattedReply}</div>`;
-        
-        aiMessages.push({ role: "assistant", content: aiReply });
+        if(aiReply && aiReply.trim().length > 0) {
+            const formattedReply = aiReply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+            win.innerHTML += `<div class="chat-msg chat-them">${formattedReply}</div>`;
+            aiMessages.push({ role: "assistant", content: aiReply });
+        } else {
+            throw new Error("Empty response from AI");
+        }
         
         win.scrollTop = win.scrollHeight;
     } catch (e) {
         document.getElementById('ai-loading').remove();
-        win.innerHTML += `<div class="chat-msg chat-them">Connection Error: ${e.message}. <br><br>If this persists, your network may be blocking the AI API.</div>`;
+        win.innerHTML += `<div class="chat-msg chat-them">Connection Error: ${e.message}. <br><br>The AI service might be busy. Please try again in a moment.</div>`;
         console.error("AI Error:", e);
     }
 }
