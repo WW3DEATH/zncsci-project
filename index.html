@@ -46,6 +46,8 @@ body.light-mode .text-gray-500{color:#666 !important}
 body.light-mode .bg-black\/20{background:rgba(0,0,0,0.05) !important}
 body.light-mode .bg-black\/40{background:rgba(0,0,0,0.1) !important}
 body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
+.avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--accent)}
+.avatar-sm{width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid var(--accent)}
 </style>
 </head>
 <body>
@@ -66,7 +68,6 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
         <button onclick="showSection('profile')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Profile</button>
         <button onclick="showSection('admin')" id="admin-nav" class="hidden text-[var(--accent2)] hover:text-white transition text-sm md:text-base">Admin</button>
         
-        <!-- Theme Toggle Button -->
         <button onclick="toggleTheme()" id="theme-btn" class="text-xl text-[var(--accent)] hover:text-[var(--accent2)] transition">
             <i class="fas fa-moon"></i>
         </button>
@@ -78,7 +79,6 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
 <!-- Main Content -->
 <main class="container mx-auto px-4 py-8 min-h-screen">
 
-    <!-- Home Section -->
     <section id="home" class="section">
         <div class="text-center py-20 relative z-10">
             <h2 class="text-4xl md:text-6xl font-grotesk font-bold mb-6 leading-tight">
@@ -92,13 +92,11 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
         </div>
     </section>
 
-    <!-- Batches Section -->
     <section id="batches" class="section hidden">
         <h2 class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Active Batches</h2>
         <div id="batch-grid" class="grid md:grid-cols-3 gap-6"></div>
     </section>
 
-    <!-- Batch Categories Section (New) -->
     <section id="batch-categories" class="section hidden">
         <button onclick="showSection('batches')" class="mb-6 text-gray-400 hover:text-[var(--accent)] flex items-center gap-2 transition">
             <i class="fas fa-arrow-left"></i> Back to Batches
@@ -107,7 +105,6 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
         <div id="cat-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
     </section>
 
-    <!-- Q&A Section -->
     <section id="qa" class="section hidden">
         <button onclick="showSection('batches')" class="mb-6 text-gray-400 hover:text-[var(--accent)] flex items-center gap-2 transition">
             <i class="fas fa-arrow-left"></i> Back to Batches
@@ -117,7 +114,6 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
             <button onclick="document.getElementById('ask-modal').classList.remove('hidden')" class="btn-primary"><i class="fas fa-plus mr-2"></i>Ask Question</button>
         </div>
         
-        <!-- Filters and Search -->
         <div class="flex flex-col md:flex-row gap-4 mb-6">
             <select id="qa-filter" onchange="renderQuestions()" class="md:w-1/4"></select>
             <select id="qa-cat-filter" onchange="renderQuestions()" class="md:w-1/4">
@@ -129,7 +125,6 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
         <div id="qa-list" class="space-y-4"></div>
     </section>
 
-    <!-- Chat Section -->
     <section id="chat" class="section hidden">
         <h2 class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Personal Chat</h2>
         <div class="grid md:grid-cols-3 gap-6 h-[70vh]">
@@ -154,27 +149,34 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
         </div>
     </section>
 
-    <!-- Profile Section -->
     <section id="profile" class="section hidden">
         <h2 class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Profile & Directory</h2>
         <div class="grid md:grid-cols-2 gap-6">
             <div class="card p-6">
-                <h3 class="text-xl font-bold mb-4 text-[var(--accent)]">My Profile</h3>
+                <h3 class="text-xl font-bold mb-6 text-[var(--accent)]">My Profile</h3>
+                
+                <!-- Profile Picture Upload UI -->
+                <div class="flex flex-col items-center mb-6">
+                    <img id="profile-pic-preview" src="https://via.placeholder.com/150" class="w-32 h-32 rounded-full object-cover border-4 border-[var(--accent)] mb-4 bg-black/20">
+                    <input type="file" id="profile-pic-input" accept="image/*" class="hidden">
+                    <button onclick="document.getElementById('profile-pic-input').click()" class="btn-primary text-sm">
+                        <i class="fas fa-camera mr-2"></i>Change Picture
+                    </button>
+                </div>
+
                 <div id="profile-info" class="space-y-3"></div>
             </div>
             <div class="card p-6">
                 <h3 class="text-xl font-bold mb-4 text-[var(--accent)]">Start a New Chat</h3>
                 <p class="text-sm text-gray-400 mb-4">Click to send a chat request. You can chat once they accept.</p>
-                <div id="users-list" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                <div id="users-list" class="space-y-2 max-h-[500px] overflow-y-auto"></div>
             </div>
         </div>
     </section>
 
-    <!-- Admin Section -->
     <section id="admin" class="section hidden">
         <h2 class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent2)] pl-4">Admin Dashboard</h2>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
             <div class="card p-6">
                 <h3 class="text-xl font-bold mb-4 text-[var(--accent2)]">Manage Batches</h3>
                 <div class="flex gap-2 mb-4">
@@ -183,7 +185,6 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
                 </div>
                 <div id="admin-batch-list" class="space-y-2"></div>
             </div>
-
             <div class="card p-6">
                 <h3 class="text-xl font-bold mb-4 text-[var(--accent2)]">Manage Categories</h3>
                 <div class="flex gap-2 mb-4">
@@ -192,7 +193,6 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
                 </div>
                 <div id="admin-cat-list" class="space-y-2"></div>
             </div>
-
             <div class="card p-6 md:col-span-2 lg:col-span-1">
                 <h3 class="text-xl font-bold mb-4 text-[var(--accent2)]">Monitor Personal Chats</h3>
                 <p class="text-sm text-gray-400 mb-4">Select two users to view their private conversation.</p>
@@ -203,18 +203,15 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
                 </div>
                 <div id="admin-chat-window" class="h-48 overflow-y-auto bg-black/20 p-4 rounded flex flex-col"></div>
             </div>
-
             <div class="card p-6 md:col-span-2 lg:col-span-3">
                 <h3 class="text-xl font-bold mb-4 text-[var(--accent2)]">Manage User Roles & Accounts</h3>
                 <p class="text-sm text-gray-400 mb-4">Assign roles or delete users from the database.</p>
                 <div id="admin-user-list" class="space-y-2 max-h-96 overflow-y-auto"></div>
             </div>
-
         </div>
     </section>
 </main>
 
-<!-- Auth Modal -->
 <div id="auth-modal" class="modal-bg hidden">
     <div class="card p-8 w-full max-w-md relative">
         <button onclick="toggleAuth()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
@@ -238,7 +235,6 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
     </div>
 </div>
 
-<!-- Ask Question Modal -->
 <div id="ask-modal" class="modal-bg hidden">
     <div class="card p-8 w-full max-w-lg relative">
         <button onclick="document.getElementById('ask-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
@@ -262,7 +258,6 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
 <script type="module">
 import * as THREE from 'three';
 
-// --- 3D BACKGROUND SCENE ---
 const canvas = document.getElementById('bg-canvas');
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -306,12 +301,9 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 });
-
 </script>
 
 <script>
-// --- FIREBASE CONFIG ---
-// REPLACE WITH YOUR ACTUAL FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyDDk_xiDvdcAv_B5oSogFH50azgLBVszKY",
   authDomain: "e-learing-9adc3.firebaseapp.com",
@@ -327,7 +319,6 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
-// --- GLOBAL STATE ---
 let currentUser = null;
 let currentUserData = null;
 let currentChatUser = null;
@@ -336,7 +327,6 @@ let globalBatches = {};
 let globalCategories = {};
 let selectedBatchId = null;
 
-// --- THEME LOGIC ---
 function toggleTheme() {
     const body = document.body;
     const isLight = body.classList.toggle('light-mode');
@@ -344,13 +334,11 @@ function toggleTheme() {
     document.getElementById('theme-btn').innerHTML = isLight ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
 }
 
-// Apply saved theme on load
 if(localStorage.getItem('theme') === 'light') {
     document.body.classList.add('light-mode');
     document.getElementById('theme-btn').innerHTML = '<i class="fas fa-sun"></i>';
 }
 
-// --- AUTH LOGIC ---
 function toggleAuth() {
     const modal = document.getElementById('auth-modal');
     if(modal.classList.contains('hidden')) modal.classList.remove('hidden');
@@ -409,12 +397,10 @@ function logout() {
     showSection('home');
 }
 
-// Explicitly set persistence to LOCAL to keep users logged in across sessions
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
   .then(() => {
     auth.onAuthStateChanged(user => {
       if(user) {
-        // Close the modal and clear fields upon successful login/signup
         document.getElementById('auth-modal').classList.add('hidden');
         document.getElementById('email').value = '';
         document.getElementById('password').value = '';
@@ -446,6 +432,10 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
 
 function updateUIForUser() {
     const batchName = globalBatches[currentUserData.batch]?.name || 'Not Assigned';
+    const profilePic = currentUserData.profilePic || 'https://via.placeholder.com/150';
+    
+    document.getElementById('profile-pic-preview').src = profilePic;
+    
     document.getElementById('profile-info').innerHTML = `
         <p><strong>Name:</strong> ${currentUserData.name}</p>
         <p><strong>Email:</strong> ${currentUserData.email}</p>
@@ -465,7 +455,50 @@ function updateUIForUser() {
     loadChatLists();
 }
 
-// --- NAVIGATION ---
+// --- Profile Picture Uploader (Resizes and Compresses) ---
+document.getElementById('profile-pic-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = function() {
+            // Resize to 200x200 max to keep RTDB fast
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const MAX_WIDTH = 200;
+            const MAX_HEIGHT = 200;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+            } else {
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
+                }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Compress to JPEG 0.8 quality
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            
+            db.ref('users/' + currentUser.uid).update({ profilePic: dataUrl }).then(() => {
+                alert("Profile picture updated successfully!");
+            }).catch(e => alert("Error updating picture: " + e.message));
+        };
+    };
+    reader.readAsDataURL(file);
+});
+
 function showSection(id) {
     if(id !== 'home' && !currentUser) {
         toggleAuth();
@@ -479,7 +512,6 @@ function showSection(id) {
     if(id === 'admin') loadAdminData();
 }
 
-// Navigate to the Category Selection page for a specific batch
 function showBatchCategories(batchId) {
     selectedBatchId = batchId;
     const batchName = globalBatches[batchId]?.name || 'Batch';
@@ -503,7 +535,6 @@ function showBatchCategories(batchId) {
     document.getElementById('batch-categories').classList.remove('hidden');
 }
 
-// Navigate directly to a specific batch and category Q&A
 function goToCategoryQA(batchId, catId) {
     showSection('qa');
     document.getElementById('qa-filter').value = batchId;
@@ -511,18 +542,14 @@ function goToCategoryQA(batchId, catId) {
     renderQuestions();
 }
 
-// --- BATCHES & CATEGORIES GLOBAL LOADERS ---
 function loadDropdowns() {
     db.ref('batches').on('value', snap => {
         globalBatches = snap.val() || {};
         if(!snap.exists()) {
-            const defaultBatches = {
-                'batch_2028': { name: 'A/L 2028', desc: 'Science Project Batch 2028' }
-            };
+            const defaultBatches = { 'batch_2028': { name: 'A/L 2028', desc: 'Science Project Batch 2028' } };
             db.ref('batches').set(defaultBatches);
             globalBatches = defaultBatches;
         } else {
-            // Force remove old batches if they exist
             if(globalBatches['batch_2026']) db.ref('batches/batch_2026').remove();
             if(globalBatches['batch_2027']) db.ref('batches/batch_2027').remove();
             if(!globalBatches['batch_2028']) {
@@ -535,11 +562,7 @@ function loadDropdowns() {
     db.ref('categories').on('value', snap => {
         globalCategories = snap.val() || {};
         if(!snap.exists()) {
-            const defaultCats = {
-                'cat_phy': { name: 'Physics' },
-                'cat_chem': { name: 'Chemistry' },
-                'cat_bio': { name: 'Biology' }
-            };
+            const defaultCats = { 'cat_phy': { name: 'Physics' }, 'cat_chem': { name: 'Chemistry' }, 'cat_bio': { name: 'Biology' } };
             db.ref('categories').set(defaultCats);
             globalCategories = defaultCats;
         }
@@ -618,7 +641,6 @@ function loadBatches() {
     else updateBatchUI();
 }
 
-// --- Q&A LOGIC ---
 function postQuestion() {
     const batch = document.getElementById('q-batch').value;
     const category = document.getElementById('q-category').value;
@@ -674,7 +696,6 @@ function renderQuestions() {
             if(filterBatch && q.batch !== filterBatch) continue;
             if(filterCat && q.category !== filterCat) continue;
             
-            // Search logic
             if(searchText) {
                 const titleMatch = q.title.toLowerCase().includes(searchText);
                 const bodyMatch = q.body.toLowerCase().includes(searchText);
@@ -704,11 +725,14 @@ function renderQuestions() {
                     repliesHtml += `
                         <div class="mt-3 pl-4 border-l-2 border-[var(--muted)]">
                             <div class="flex justify-between items-center">
-                                <p class="text-sm text-[var(--accent2)]">${r.authorName} <span class="text-gray-500">(${r.authorRole})</span></p>
+                                <div class="flex items-center gap-2">
+                                    <img src="${r.authorPic || 'https://via.placeholder.com/40'}" class="avatar-sm">
+                                    <p class="text-sm text-[var(--accent2)]">${r.authorName} <span class="text-gray-500">(${r.authorRole})</span></p>
+                                </div>
                                 ${canDeleteReply ? `<button onclick="deleteReply('${id}', '${rId}')" class="text-red-500 text-xs hover:text-red-400"><i class="fas fa-trash"></i></button>` : ''}
                             </div>
-                            ${r.text ? `<p class="text-gray-300 mt-1">${r.text}</p>` : ''}
-                            ${r.file ? `<a href="${r.file}" download="${r.fileName || 'file'}" class="text-blue-400 underline text-sm mt-1 inline-block"><i class="fas fa-paperclip"></i> ${r.fileName || 'View Attachment'}</a>` : ''}
+                            ${r.text ? `<p class="text-gray-300 mt-1 ml-10">${r.text}</p>` : ''}
+                            ${r.file ? `<a href="${r.file}" download="${r.fileName || 'file'}" class="text-blue-400 underline text-sm mt-1 ml-10 inline-block"><i class="fas fa-paperclip"></i> ${r.fileName || 'View Attachment'}</a>` : ''}
                         </div>
                     `;
                 }
@@ -728,7 +752,10 @@ function renderQuestions() {
                     </div>
                     <p class="text-gray-400 mb-3">${q.body}</p>
                     ${q.file ? `<a href="${q.file}" download="${q.fileName || 'file'}" class="text-blue-400 underline text-sm mb-3 inline-block"><i class="fas fa-paperclip"></i> ${q.fileName || 'View Attachment'}</a>` : ''}
-                    <p class="text-sm text-gray-500">Asked by ${q.authorName} (${q.authorRole})</p>
+                    <div class="flex items-center gap-2 mt-2">
+                        <img src="${q.authorPic || 'https://via.placeholder.com/40'}" class="avatar-sm">
+                        <p class="text-sm text-gray-500">Asked by ${q.authorName} (${q.authorRole})</p>
+                    </div>
                     
                     <div class="replies-section mt-4">
                         ${repliesHtml}
@@ -760,6 +787,7 @@ function postReply(qId) {
         authorId: currentUser.uid,
         authorName: currentUserData.name,
         authorRole: currentUserData.role,
+        authorPic: currentUserData.profilePic || "",
         timestamp: Date.now()
     };
 
@@ -781,18 +809,13 @@ function postReply(qId) {
 }
 
 function deleteQuestion(qId) {
-    if(confirm("Delete this question and all its replies?")) {
-        db.ref('questions/' + qId).remove();
-    }
+    if(confirm("Delete this question and all its replies?")) db.ref('questions/' + qId).remove();
 }
 
 function deleteReply(qId, rId) {
-    if(confirm("Delete this reply?")) {
-        db.ref(`questions/${qId}/replies/${rId}`).remove();
-    }
+    if(confirm("Delete this reply?")) db.ref(`questions/${qId}/replies/${rId}`).remove();
 }
 
-// --- USERS & CHAT LOGIC ---
 function loadUsers() {
     db.ref('users').on('value', snap => {
         const users = snap.val() || {};
@@ -808,13 +831,17 @@ function loadUsers() {
         
         Object.keys(users).forEach(uid => {
             const u = users[uid];
+            const pic = u.profilePic || 'https://via.placeholder.com/40';
             
             if(uid !== currentUser.uid && list) {
                 list.innerHTML += `
                     <div class="flex justify-between items-center bg-black/20 p-2 rounded">
-                        <div>
-                            <p class="font-semibold">${u.name}</p>
-                            <p class="text-xs text-gray-500">${u.role}</p>
+                        <div class="flex items-center gap-3">
+                            <img src="${pic}" class="avatar-sm">
+                            <div>
+                                <p class="font-semibold">${u.name}</p>
+                                <p class="text-xs text-gray-500">${u.role}</p>
+                            </div>
                         </div>
                         <button onclick="sendChatRequest('${uid}')" class="text-xs btn-primary px-2 py-1">Request Chat</button>
                     </div>
@@ -825,9 +852,12 @@ function loadUsers() {
                 if(adminUserList) {
                     adminUserList.innerHTML += `
                         <div class="flex flex-col md:flex-row justify-between items-center bg-black/20 p-2 rounded gap-2">
-                            <div class="flex-1">
-                                <p class="font-semibold">${u.name} ${uid === currentUser.uid ? '(You)' : ''}</p>
-                                <p class="text-xs text-gray-500">${u.email}</p>
+                            <div class="flex items-center gap-3 flex-1">
+                                <img src="${pic}" class="avatar-sm">
+                                <div>
+                                    <p class="font-semibold">${u.name} ${uid === currentUser.uid ? '(You)' : ''}</p>
+                                    <p class="text-xs text-gray-500">${u.email}</p>
+                                </div>
                             </div>
                             <div class="flex gap-2 items-center">
                                 <select onchange="updateUserRole('${uid}', this.value)" class="w-full md:w-40">
@@ -849,9 +879,7 @@ function loadUsers() {
 
 function deleteUserAccount(uid) {
     if(confirm("Delete this user? This will remove their profile, role, and data from the database.")) {
-        db.ref('users/' + uid).remove().then(() => {
-            alert("User removed from database.");
-        }).catch(e => alert("Error: " + e.message));
+        db.ref('users/' + uid).remove().then(() => alert("User removed from database.")).catch(e => alert("Error: " + e.message));
     }
 }
 
@@ -895,12 +923,18 @@ function loadChatLists() {
                 const otherId = r.from === currentUser.uid ? r.to : r.from;
                 db.ref('users/' + otherId).once('value', uSnap => {
                     const u = uSnap.val();
-                    if(u && chatList) chatList.innerHTML += `
-                        <div onclick="openChat('${otherId}', '${u.name}')" class="p-2 bg-black/20 rounded cursor-pointer hover:bg-black/40">
-                            <p class="font-semibold">${u.name}</p>
-                            <p class="text-xs text-gray-500">${u.role}</p>
-                        </div>
-                    `;
+                    if(u && chatList) {
+                        const pic = u.profilePic || 'https://via.placeholder.com/40';
+                        chatList.innerHTML += `
+                            <div onclick="openChat('${otherId}', '${u.name}', '${pic}')" class="p-2 bg-black/20 rounded cursor-pointer hover:bg-black/40 flex items-center gap-2">
+                                <img src="${pic}" class="avatar-sm">
+                                <div>
+                                    <p class="font-semibold">${u.name}</p>
+                                    <p class="text-xs text-gray-500">${u.role}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
                 });
             }
         }
@@ -911,20 +945,27 @@ function acceptReq(id) { db.ref('chatRequests/' + id).update({ status: 'accepted
 function declineReq(id) { db.ref('chatRequests/' + id).remove(); }
 
 let chatListener = null;
-function openChat(otherId, otherName) {
+function openChat(otherId, otherName, otherPic) {
     currentChatUser = otherId;
     const chatId = [currentUser.uid, otherId].sort().join('_');
     
     if(chatListener) chatListener.off();
     
     const win = document.getElementById('chat-window');
-    win.innerHTML = `<div class="text-center text-gray-500 border-b pb-2 mb-2 w-full">${otherName}</div>`;
+    const pic = otherPic || 'https://via.placeholder.com/40';
+    win.innerHTML = `
+        <div class="text-center text-gray-500 border-b pb-2 mb-2 w-full flex items-center justify-center gap-2">
+            <img src="${pic}" class="avatar-sm"> ${otherName}
+        </div>`;
     document.getElementById('chat-input-area').classList.remove('hidden');
     
     chatListener = db.ref('chats/' + chatId);
     chatListener.on('value', snap => {
         const msgs = snap.val() || {};
-        win.innerHTML = `<div class="text-center text-gray-500 border-b pb-2 mb-2 w-full">${otherName}</div>`;
+        win.innerHTML = `
+        <div class="text-center text-gray-500 border-b pb-2 mb-2 w-full flex items-center justify-center gap-2">
+            <img src="${pic}" class="avatar-sm"> ${otherName}
+        </div>`;
         
         const canDeleteMsg = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
         
@@ -941,9 +982,7 @@ function openChat(otherId, otherName) {
 function deleteChatMsg(msgId) {
     if(!currentChatUser) return;
     const chatId = [currentUser.uid, currentChatUser].sort().join('_');
-    if(confirm("Delete this message?")) {
-        db.ref('chats/' + chatId + '/' + msgId).remove();
-    }
+    if(confirm("Delete this message?")) db.ref('chats/' + chatId + '/' + msgId).remove();
 }
 
 function sendMessage() {
@@ -961,7 +1000,6 @@ function sendMessage() {
     input.value = '';
 }
 
-// --- ADMIN LOGIC ---
 function loadAdminData() {
     loadDropdowns(); 
     loadUsers();
@@ -1023,7 +1061,6 @@ function adminViewChat() {
     });
 }
 
-// Init global listeners
 loadDropdowns();
 </script>
 </body>
