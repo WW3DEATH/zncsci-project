@@ -85,11 +85,7 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
         <button onclick="showSection('batches')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Batches</button>
         <button onclick="showSection('qa')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Q&A</button>
         <button onclick="showSection('ai')" class="hover:text-[var(--accent)] transition text-sm md:text-base">AI Tutor</button>
-        <button onclick="showSection('chat')" class="hover:text-[var(--accent)] transition text-sm md:text-base relative">
-            Chat
-            <span id="chat-dot" class="absolute top-0 right-0 w-2 h-2 bg-red-600 rounded-full hidden"></span>
-            <span id="chat-badge" class="absolute -top-2 -right-3 bg-red-600 text-white text-[10px] rounded-full h-4 min-w-[16px] px-1 flex items-center justify-center hidden"></span>
-        </button>
+        <button onclick="showSection('chat')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Chat</button>
         <button onclick="showSection('profile')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Profile</button>
         <button onclick="showSection('admin')" id="admin-nav" class="hidden text-[var(--accent2)] hover:text-white transition text-sm md:text-base">Admin</button>
         
@@ -381,11 +377,6 @@ let globalBatches = {};
 let globalCategories = {};
 let selectedBatchId = null;
 
-// --- NOTIFICATION GLOBALS ---
-let globalChats = {};
-let globalChatRequests = {};
-let globalQuestionsCount = {};
-
 // --- AI TUTOR LOGIC ---
 let aiMessages = [];
 let aiCurrentImage = null; // Stores image data URL
@@ -568,47 +559,6 @@ async function askAI() {
 }
 // --- END AI TUTOR LOGIC ---
 
-// --- NOTIFICATION LOGIC ---
-function recalculateNotifications() {
-    if(!currentUser) return;
-    
-    let pendingReqs = 0;
-    for(let id in globalChatRequests) {
-        if(globalChatRequests[id].to === currentUser.uid && globalChatRequests[id].status === 'pending') {
-            pendingReqs++;
-        }
-    }
-    
-    let unread = 0;
-    const lastRead = currentUserData?.lastRead || {};
-    for(let chatId in globalChats) {
-        const uids = chatId.split('_');
-        if(uids.includes(currentUser.uid)) {
-            const otherId = uids[0] === currentUser.uid ? uids[1] : uids[0];
-            for(let mId in globalChats[chatId]) {
-                const m = globalChats[chatId][mId];
-                if(m.sender === otherId && m.timestamp > (lastRead[otherId] || 0)) {
-                    unread++;
-                }
-            }
-        }
-    }
-    
-    const dot = document.getElementById('chat-dot');
-    const badge = document.getElementById('chat-badge');
-    
-    if(pendingReqs > 0) dot.classList.remove('hidden');
-    else dot.classList.add('hidden');
-    
-    if(unread > 0) {
-        badge.innerText = unread;
-        badge.classList.remove('hidden');
-    } else {
-        badge.classList.add('hidden');
-    }
-}
-// --- END NOTIFICATION LOGIC ---
-
 function toggleTheme() {
     const body = document.body;
     const isLight = body.classList.toggle('light-mode');
@@ -694,28 +644,8 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
             if(currentUserData) {
                 updateUIForUser();
                 if(!document.getElementById('home').classList.contains('hidden')) showSection('batches');
-                recalculateNotifications(); // Recalculate when user data (like lastRead) changes
             }
         });
-        
-        // Setup Global Listeners for Notifications
-        db.ref('chats').on('value', snap => { globalChats = snap.val() || {}; recalculateNotifications(); });
-        db.ref('chatRequests').on('value', snap => { globalChatRequests = snap.val() || {}; recalculateNotifications(); });
-        db.ref('questions').on('value', snap => {
-            const questions = snap.val() || {};
-            globalQuestionsCount = {};
-            for(let id in questions) {
-                const q = questions[id];
-                if(q.category) {
-                    globalQuestionsCount[q.category] = (globalQuestionsCount[q.category] || 0) + 1;
-                }
-            }
-            // If batch categories section is open, re-render it to show new counts
-            if(!document.getElementById('batch-categories').classList.contains('hidden') && selectedBatchId) {
-                showBatchCategories(selectedBatchId);
-            }
-        });
-
         document.getElementById('auth-btn').innerText = "Logout";
         document.getElementById('auth-btn').onclick = logout;
       } else {
@@ -821,10 +751,8 @@ function showBatchCategories(batchId) {
     
     for(let id in globalCategories) {
         const c = globalCategories[id];
-        const count = globalQuestionsCount[id] || 0;
         grid.innerHTML += `
-            <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px] relative" onclick="goToCategoryQA('${batchId}', '${id}')">
-                ${count > 0 ? `<span class="absolute top-4 right-4 bg-red-600 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold">${count}</span>` : ''}
+            <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px]" onclick="goToCategoryQA('${batchId}', '${id}')">
                 <i class="fas fa-book-open text-4xl text-[var(--accent)] mb-4"></i>
                 <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${c.name}</h3>
                 <p class="text-gray-400 mt-2 text-sm">Enter Q&A Section</p>
@@ -1260,9 +1188,6 @@ function openChat(otherId, otherName, otherPic) {
             <img src="${pic}" class="avatar-sm"> ${otherName}
         </div>`;
     document.getElementById('chat-input-area').classList.remove('hidden');
-    
-    // Mark messages as read
-    db.ref('users/' + currentUser.uid + '/lastRead/' + otherId).set(Date.now());
     
     chatListener = db.ref('chats/' + chatId);
     chatListener.on('value', snap => {
