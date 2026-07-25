@@ -12,6 +12,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <!-- Puter.js for Free Key-less AI -->
 <script src="https://js.puter.com/v2/"></script>
+<!-- pdf.js for PDF Text Extraction -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <!-- MathJax for Rendering LaTeX Math Equations -->
 <script>
   window.MathJax = {
@@ -21,7 +23,7 @@
       processEscapes: true
     },
     chtml: {
-      linebreaks: { automatic: true } // Forces long equations to wrap to the next line
+      linebreaks: { automatic: true }
     },
     svg: {
       fontCache: 'global',
@@ -154,11 +156,19 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
                 <div class="m-auto text-gray-500 text-center max-w-md">
                     <i class="fas fa-robot text-5xl mb-4 block text-[var(--accent)]"></i>
                     <h3 class="text-xl font-bold mb-2 text-[var(--fg)]">Hello! I am your AI Tutor.</h3>
-                    <p>Ask me anything about Physics, Chemistry, or Biology. I'm here to help you understand complex scientific concepts!</p>
+                    <p>Ask me anything about Physics, Chemistry, or Biology. You can also upload images or PDFs!</p>
                 </div>
             </div>
-            <div class="flex gap-2">
-                <input id="ai-input" placeholder="Type your science question here..." onkeypress="if(event.key==='Enter')askAI()">
+            
+            <!-- File Preview Area -->
+            <div id="ai-file-preview" class="mb-2 hidden"></div>
+            
+            <div class="flex gap-2 items-center">
+                <input type="file" id="ai-file-input" accept="image/*, application/pdf" class="hidden">
+                <button onclick="document.getElementById('ai-file-input').click()" class="btn-primary px-3 py-2 text-sm" title="Upload Image or PDF (Max 5MB)">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <input id="ai-input" placeholder="Type your science question here..." onkeypress="if(event.key==='Enter')askAI()" class="flex-1">
                 <button onclick="askAI()" class="btn-primary"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
@@ -356,6 +366,9 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
+// Configure pdf.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
 let currentUser = null;
 let currentUserData = null;
 let currentChatUser = null;
@@ -364,33 +377,123 @@ let globalBatches = {};
 let globalCategories = {};
 let selectedBatchId = null;
 
-// --- AI TUTOR LOGIC (Using Puter.js & MathJax) ---
+// --- AI TUTOR LOGIC ---
 let aiMessages = [];
+let aiCurrentImage = null; // Stores image data URL
+let aiCurrentPdfText = null; // Stores extracted PDF text
 
 function clearAIChat() {
     aiMessages = [];
+    clearAIAttachment();
     document.getElementById('ai-chat-window').innerHTML = `
         <div class="m-auto text-gray-500 text-center max-w-md">
             <i class="fas fa-robot text-5xl mb-4 block text-[var(--accent)]"></i>
             <h3 class="text-xl font-bold mb-2 text-[var(--fg)]">Hello! I am your AI Tutor.</h3>
-            <p>Ask me anything about Physics, Chemistry, or Biology. I'm here to help you understand complex scientific concepts!</p>
+            <p>Ask me anything about Physics, Chemistry, or Biology. You can also upload images or PDFs!</p>
         </div>`;
 }
+
+function clearAIAttachment() {
+    aiCurrentImage = null;
+    aiCurrentPdfText = null;
+    document.getElementById('ai-file-input').value = '';
+    const preview = document.getElementById('ai-file-preview');
+    preview.classList.add('hidden');
+    preview.innerHTML = '';
+}
+
+// Handle File Selection for AI
+document.getElementById('ai-file-input').addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+    
+    if(file.size > 5 * 1024 * 1024) {
+        alert("File too large. Max 5MB.");
+        this.value = '';
+        return;
+    }
+
+    const previewDiv = document.getElementById('ai-file-preview');
+    clearAIAttachment(); // Reset previous states
+
+    if(file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            aiCurrentImage = ev.target.result;
+            previewDiv.innerHTML = `
+                <div class="relative inline-block">
+                    <img src="${aiCurrentImage}" class="h-20 w-20 object-cover rounded-lg border border-[var(--accent)]">
+                    <button onclick="clearAIAttachment()" class="absolute -top-2 -right-2 bg-red-600 rounded-full w-5 h-5 text-xs text-white">x</button>
+                </div>`;
+            previewDiv.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    } else if(file.type === 'application/pdf') {
+        previewDiv.innerHTML = `<p class="text-sm text-[var(--accent2)]"><i class="fas fa-spinner fa-spin mr-1"></i> Extracting text from PDF...</p>`;
+        previewDiv.classList.remove('hidden');
+        
+        try {
+            const reader = new FileReader();
+            reader.onload = async function(ev) {
+                const typedarray = new Uint8Array(ev.target.result);
+                const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                let pdfText = "";
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    pdfText += textContent.items.map(item => item.str).join(' ') + "\n\n";
+                }
+                
+                if(pdfText.trim().length > 0) {
+                    aiCurrentPdfText = pdfText;
+                    previewDiv.innerHTML = `
+                        <div class="relative bg-black/20 p-2 rounded-lg flex items-center gap-2 max-w-xs">
+                            <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+                            <span class="text-sm truncate flex-1">${file.name}</span>
+                            <button onclick="clearAIAttachment()" class="text-red-500 text-sm">x</button>
+                        </div>`;
+                } else {
+                    alert("Could not extract text from this PDF. It might be a scanned image.");
+                    clearAIAttachment();
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        } catch(err) {
+            alert("Error reading PDF: " + err.message);
+            clearAIAttachment();
+        }
+    } else {
+        alert("Only images and PDFs are supported.");
+        this.value = '';
+    }
+});
 
 async function askAI() {
     const input = document.getElementById('ai-input');
     const text = input.value.trim();
-    if(!text) return;
+    if(!text && !aiCurrentImage && !aiCurrentPdfText) return;
     
     const win = document.getElementById('ai-chat-window');
     if(win.querySelector('.m-auto')) win.innerHTML = '';
 
-    win.innerHTML += `<div class="chat-msg chat-me">${text}</div>`;
+    // Display user message (with attachment icon if present)
+    let userDisplayText = text;
+    if(aiCurrentImage) userDisplayText += (text ? " " : "") + "[Attached Image]";
+    if(aiCurrentPdfText) userDisplayText += (text ? " " : "") + "[Attached PDF]";
+    
+    win.innerHTML += `<div class="chat-msg chat-me">${userDisplayText}</div>`;
     input.value = '';
     win.innerHTML += `<div class="chat-msg chat-them" id="ai-loading"><i class="fas fa-spinner fa-spin mr-2"></i>Thinking...</div>`;
     win.scrollTop = win.scrollHeight;
 
-    aiMessages.push({ role: "user", content: text });
+    // Construct the final prompt content for the API
+    let finalContent = text;
+    if(aiCurrentPdfText) {
+        finalContent += `\n\nPlease analyze the following PDF content and answer based on it:\n\n${aiCurrentPdfText.substring(0, 10000)}`; // Limit text size
+    }
+
+    aiMessages.push({ role: "user", content: finalContent });
 
     // Keep only the last 6 messages to prevent payload from being too large
     if(aiMessages.length > 6) {
@@ -403,8 +506,14 @@ async function askAI() {
             content: "You are an expert Science Tutor for Advanced Level students. Provide clear, concise, and educational answers regarding Physics, Chemistry, and Biology. You MUST use LaTeX formatting for ALL mathematical formulas, equations, and matrices. Use \\( ... \\) for inline math and \\[ ... \\] for block math. Do not use markdown code blocks for math."
         };
         
-        // Puter.js AI Chat call
-        const response = await puter.ai.chat([systemPrompt, ...aiMessages]);
+        let response;
+        if(aiCurrentImage) {
+            // Puter.js Vision Call: pass the image URL as the second parameter
+            response = await puter.ai.chat([systemPrompt, ...aiMessages], aiCurrentImage);
+        } else {
+            // Puter.js Text Call
+            response = await puter.ai.chat([systemPrompt, ...aiMessages]);
+        }
         
         // Extract reply based on Puter's response structure
         const aiReply = response.message?.content || response.content || response.text || "Sorry, I couldn't generate a response.";
@@ -424,11 +533,15 @@ async function askAI() {
             throw new Error("Empty response from AI");
         }
         
+        // Clear attachments after sending
+        clearAIAttachment();
+        
         win.scrollTop = win.scrollHeight;
     } catch (e) {
         document.getElementById('ai-loading').remove();
         win.innerHTML += `<div class="chat-msg chat-them">Connection Error: ${e.message}. <br><br>The AI service might be busy. Please try again in a moment.</div>`;
         console.error("AI Error:", e);
+        clearAIAttachment();
     }
 }
 // --- END AI TUTOR LOGIC ---
