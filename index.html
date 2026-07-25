@@ -87,7 +87,6 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
         <button onclick="showSection('ai')" class="hover:text-[var(--accent)] transition text-sm md:text-base">AI Tutor</button>
         <button onclick="showSection('chat')" class="hover:text-[var(--accent)] transition text-sm md:text-base relative">
             Chat
-            <span id="chat-dot" class="absolute top-0 right-0 w-2 h-2 bg-red-600 rounded-full hidden"></span>
             <span id="chat-badge" class="absolute -top-2 -right-3 bg-red-600 text-white text-[10px] rounded-full h-4 min-w-[16px] px-1 flex items-center justify-center hidden"></span>
         </button>
         <button onclick="showSection('profile')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Profile</button>
@@ -595,14 +594,11 @@ function recalculateNotifications() {
         }
     }
     
-    const dot = document.getElementById('chat-dot');
+    const total = pendingReqs + unread;
     const badge = document.getElementById('chat-badge');
     
-    if(pendingReqs > 0) dot.classList.remove('hidden');
-    else dot.classList.add('hidden');
-    
-    if(unread > 0) {
-        badge.innerText = unread;
+    if(total > 0) {
+        badge.innerText = total;
         badge.classList.remove('hidden');
     } else {
         badge.classList.add('hidden');
@@ -998,7 +994,7 @@ function postQuestion() {
 function renderQuestions() {
     const filterBatch = document.getElementById('qa-filter').value;
     const filterCat = document.getElementById('qa-cat-filter').value;
-    const searchText = (document.getElementById('qa-search')?.value || "").toLowerCase();
+    const searchText = (document.getElementById('qa-search')?.value || "").toLowerCase";
     const list = document.getElementById('qa-list');
     list.innerHTML = '<div class="text-gray-500">Loading...</div>';
 
