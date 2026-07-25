@@ -10,6 +10,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<!-- Puter.js for Free Key-less AI -->
+<script src="https://js.puter.com/v2/"></script>
 <script type="importmap">
 { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
 </script>
@@ -344,7 +346,7 @@ let globalBatches = {};
 let globalCategories = {};
 let selectedBatchId = null;
 
-// --- AI TUTOR LOGIC (Free Endpoint with Referrer) ---
+// --- AI TUTOR LOGIC (Using Puter.js - No API Key Required) ---
 let aiMessages = [];
 
 function clearAIChat() {
@@ -372,27 +374,19 @@ async function askAI() {
 
     aiMessages.push({ role: "user", content: text });
 
-    // Keep only the last 4 messages to prevent URL from being too long
-    if(aiMessages.length > 4) {
-        aiMessages = aiMessages.slice(-4);
+    // Keep only the last 6 messages to prevent payload from being too large
+    if(aiMessages.length > 6) {
+        aiMessages = aiMessages.slice(-6);
     }
 
-    // Construct a single string prompt with history
-    let prompt = "You are an expert Science Tutor for Advanced Level students. Provide clear, concise, and educational answers regarding Physics, Chemistry, and Biology.\n\n";
-    aiMessages.forEach(msg => {
-        if(msg.role === 'user') prompt += `Student: ${msg.content}\n`;
-        if(msg.role === 'assistant') prompt += `Tutor: ${msg.content}\n`;
-    });
-    prompt += `Tutor: `;
-
     try {
-        // Using the free GET endpoint with a referrer to bypass payment/API key restrictions
-        const url = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai&referrer=zahira-science.vercel.app`;
-        const response = await fetch(url);
+        const systemPrompt = { role: "system", content: "You are an expert Science Tutor for Advanced Level students. Provide clear, concise, and educational answers regarding Physics, Chemistry, and Biology." };
         
-        if(!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+        // Puter.js AI Chat call
+        const response = await puter.ai.chat([systemPrompt, ...aiMessages]);
         
-        const aiReply = await response.text();
+        // Extract reply based on Puter's response structure
+        const aiReply = response.message?.content || response.content || response.text || "Sorry, I couldn't generate a response.";
         
         document.getElementById('ai-loading').remove();
         if(aiReply && aiReply.trim().length > 0) {
