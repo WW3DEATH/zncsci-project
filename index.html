@@ -12,6 +12,19 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <!-- Puter.js for Free Key-less AI -->
 <script src="https://js.puter.com/v2/"></script>
+<!-- MathJax for Rendering LaTeX Math Equations -->
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['\\(', '\\)']],
+      displayMath: [['\\[', '\\]'], ['$$', '$$']]
+    },
+    svg: {
+      fontCache: 'global'
+    }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <script type="importmap">
 { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
 </script>
@@ -35,7 +48,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
 .hidden{display:none !important}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(5px);z-index:50;display:flex;align-items:center;justify-content:center;padding:1rem}
 body.light-mode .modal-bg{background:rgba(0,0,0,0.5)}
-.chat-msg{max-width:75%;padding:10px 14px;border-radius:12px;margin-bottom:8px;word-wrap:break-word;position:relative}
+.chat-msg{max-width:75%;padding:10px 14px;border-radius:12px;margin-bottom:8px;word-wrap:break-word;position:relative;white-space:pre-wrap;overflow-x:auto}
 .chat-me{background:var(--accent);color:#000;align-self:flex-end;border-bottom-right-radius:2px}
 .chat-them{background:rgba(255,255,255,0.1);color:#fff;align-self:flex-start;border-bottom-left-radius:2px}
 body.light-mode .chat-them{background:rgba(0,0,0,0.1);color:#000}
@@ -346,7 +359,7 @@ let globalBatches = {};
 let globalCategories = {};
 let selectedBatchId = null;
 
-// --- AI TUTOR LOGIC (Using Puter.js - No API Key Required) ---
+// --- AI TUTOR LOGIC (Using Puter.js & MathJax) ---
 let aiMessages = [];
 
 function clearAIChat() {
@@ -380,7 +393,10 @@ async function askAI() {
     }
 
     try {
-        const systemPrompt = { role: "system", content: "You are an expert Science Tutor for Advanced Level students. Provide clear, concise, and educational answers regarding Physics, Chemistry, and Biology." };
+        const systemPrompt = { 
+            role: "system", 
+            content: "You are an expert Science Tutor for Advanced Level students. Provide clear, concise, and educational answers regarding Physics, Chemistry, and Biology. You MUST use LaTeX formatting for ALL mathematical formulas, equations, and matrices. Use \\( ... \\) for inline math and \\[ ... \\] for block math. Do not use markdown code blocks for math."
+        };
         
         // Puter.js AI Chat call
         const response = await puter.ai.chat([systemPrompt, ...aiMessages]);
@@ -390,9 +406,15 @@ async function askAI() {
         
         document.getElementById('ai-loading').remove();
         if(aiReply && aiReply.trim().length > 0) {
-            const formattedReply = aiReply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+            // basic markdown replacement for bold text. Newlines are handled by CSS white-space: pre-wrap;
+            const formattedReply = aiReply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             win.innerHTML += `<div class="chat-msg chat-them">${formattedReply}</div>`;
             aiMessages.push({ role: "assistant", content: aiReply });
+            
+            // Trigger MathJax to render the new message
+            if (window.MathJax) {
+                MathJax.typesetPromise([win.lastChild]).catch(e => console.error("MathJax error:", e));
+            }
         } else {
             throw new Error("Empty response from AI");
         }
