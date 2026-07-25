@@ -148,6 +148,23 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
         <div id="qa-list" class="space-y-4"></div>
     </section>
 
+    <!-- Group Chat Section -->
+    <section id="group-chat" class="section hidden">
+        <button onclick="showSection('batches')" class="mb-6 text-gray-400 hover:text-[var(--accent)] flex items-center gap-2 transition">
+            <i class="fas fa-arrow-left"></i> Back to Batches
+        </button>
+        <h2 id="gc-title" class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Group Discussion</h2>
+        <div class="card p-4 flex flex-col h-[65vh]">
+            <div id="gc-window" class="flex-1 overflow-y-auto mb-4 flex flex-col">
+                <div class="m-auto text-gray-500 text-center">Loading messages...</div>
+            </div>
+            <div class="flex gap-2">
+                <input id="gc-msg" placeholder="Type your message to the group..." onkeypress="if(event.key==='Enter')sendGroupMessage()">
+                <button onclick="sendGroupMessage()" class="btn-primary"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </section>
+
     <!-- AI Tutor Section -->
     <section id="ai" class="section hidden">
         <div class="flex justify-between items-center mb-6">
@@ -568,6 +585,71 @@ async function askAI() {
 }
 // --- END AI TUTOR LOGIC ---
 
+// --- GROUP CHAT LOGIC ---
+let groupChatListener = null;
+let currentGroupChatId = null;
+
+function openGroupChat(batchId, catId, catName) {
+    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+    document.getElementById('group-chat').classList.remove('hidden');
+    document.getElementById('gc-title').innerText = `${catName} Discussion`;
+    
+    currentGroupChatId = `${batchId}_${catId}`;
+    if(groupChatListener) groupChatListener.off();
+    
+    const win = document.getElementById('gc-window');
+    win.innerHTML = '<div class="m-auto text-gray-500">Loading messages...</div>';
+    
+    groupChatListener = db.ref('groupChats/' + currentGroupChatId);
+    groupChatListener.on('value', snap => {
+        const msgs = snap.val() || {};
+        win.innerHTML = '';
+        
+        const sortedMsgs = Object.entries(msgs).sort((a, b) => a[1].timestamp - b[1].timestamp);
+        
+        if(sortedMsgs.length === 0) {
+            win.innerHTML = '<div class="m-auto text-gray-500 text-center">No messages yet. Start the discussion!</div>';
+            return;
+        }
+        
+        sortedMsgs.forEach(([id, m]) => {
+            const isMe = m.sender === currentUser.uid;
+            const cls = isMe ? 'chat-me' : 'chat-them';
+            const pic = m.pic || 'https://via.placeholder.com/40';
+            
+            if(isMe) {
+                win.innerHTML += `<div class="chat-msg ${cls}">${m.text}</div>`;
+            } else {
+                win.innerHTML += `
+                    <div class="chat-msg ${cls}">
+                        <div class="flex items-center gap-2 mb-1">
+                            <img src="${pic}" class="avatar-sm">
+                            <span class="text-xs font-bold text-[var(--accent2)]">${m.name}</span>
+                        </div>
+                        ${m.text}
+                    </div>`;
+            }
+        });
+        win.scrollTop = win.scrollHeight;
+    });
+}
+
+function sendGroupMessage() {
+    const input = document.getElementById('gc-msg');
+    const text = input.value.trim();
+    if(!text) return;
+    
+    db.ref('groupChats/' + currentGroupChatId).push({
+        sender: currentUser.uid,
+        name: currentUserData.name,
+        pic: currentUserData.profilePic || "",
+        text: text,
+        timestamp: Date.now()
+    });
+    input.value = '';
+}
+// --- END GROUP CHAT LOGIC ---
+
 // --- NOTIFICATION LOGIC ---
 function recalculateNotifications() {
     if(!currentUser) return;
@@ -824,7 +906,8 @@ function showSection(id) {
 
 function showBatchCategories(batchId) {
     selectedBatchId = batchId;
-    const batchName = globalBatches[batchId]?.name || 'Batch';
+    const batchData = globalBatches[batchId];
+    const batchName = batchData?.name || 'Batch';
     document.getElementById('cat-section-title').innerText = batchName + ' - Select a Category';
     
     const grid = document.getElementById('cat-grid');
@@ -832,15 +915,26 @@ function showBatchCategories(batchId) {
     
     for(let id in globalCategories) {
         const c = globalCategories[id];
-        const count = globalQuestionsCount[id] || 0;
-        grid.innerHTML += `
-            <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px] relative" onclick="goToCategoryQA('${batchId}', '${id}')">
-                ${count > 0 ? `<span class="absolute top-4 right-4 bg-red-600 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold">${count}</span>` : ''}
-                <i class="fas fa-book-open text-4xl text-[var(--accent)] mb-4"></i>
-                <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${c.name}</h3>
-                <p class="text-gray-400 mt-2 text-sm">Enter Q&A Section</p>
-            </div>
-        `;
+        
+        if(batchName === 'Discussion') {
+            grid.innerHTML += `
+                <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px]" onclick="openGroupChat('${batchId}', '${id}', '${c.name}')">
+                    <i class="fas fa-users text-4xl text-[var(--accent)] mb-4"></i>
+                    <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${c.name}</h3>
+                    <p class="text-gray-400 mt-2 text-sm">Join Group Chat</p>
+                </div>
+            `;
+        } else {
+            const count = globalQuestionsCount[id] || 0;
+            grid.innerHTML += `
+                <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px] relative" onclick="goToCategoryQA('${batchId}', '${id}')">
+                    ${count > 0 ? `<span class="absolute top-4 right-4 bg-red-600 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold">${count}</span>` : ''}
+                    <i class="fas fa-book-open text-4xl text-[var(--accent)] mb-4"></i>
+                    <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${c.name}</h3>
+                    <p class="text-gray-400 mt-2 text-sm">Enter Q&A Section</p>
+                </div>
+            `;
+        }
     }
     
     document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
@@ -858,7 +952,10 @@ function loadDropdowns() {
     db.ref('batches').on('value', snap => {
         globalBatches = snap.val() || {};
         if(!snap.exists()) {
-            const defaultBatches = { 'batch_2028': { name: 'A/L 2028', desc: 'Science Project Batch 2028' } };
+            const defaultBatches = { 
+                'batch_2028': { name: 'A/L 2028', desc: 'Science Project Batch 2028' },
+                'batch_discussion': { name: 'Discussion', desc: 'Group discussions for all subjects' }
+            };
             db.ref('batches').set(defaultBatches);
             globalBatches = defaultBatches;
         } else {
@@ -867,6 +964,9 @@ function loadDropdowns() {
             if(!globalBatches['batch_2028']) {
                 db.ref('batches/batch_2028').set({ name: 'A/L 2028', desc: 'Science Project Batch 2028' });
             }
+            if(!globalBatches['batch_discussion']) {
+                db.ref('batches/batch_discussion').set({ name: 'Discussion', desc: 'Group discussions for all subjects' });
+            }
         }
         updateBatchUI();
     });
@@ -874,9 +974,18 @@ function loadDropdowns() {
     db.ref('categories').on('value', snap => {
         globalCategories = snap.val() || {};
         if(!snap.exists()) {
-            const defaultCats = { 'cat_phy': { name: 'Physics' }, 'cat_chem': { name: 'Chemistry' }, 'cat_bio': { name: 'Biology' } };
+            const defaultCats = { 
+                'cat_phy': { name: 'Physics' }, 
+                'cat_chem': { name: 'Chemistry' }, 
+                'cat_bio': { name: 'Biology' },
+                'cat_cmaths': { name: 'C.Maths' }
+            };
             db.ref('categories').set(defaultCats);
             globalCategories = defaultCats;
+        } else {
+            if(!globalCategories['cat_cmaths']) {
+                db.ref('categories/cat_cmaths').set({ name: 'C.Maths' });
+            }
         }
         updateCategoryUI();
     });
