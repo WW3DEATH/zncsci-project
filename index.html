@@ -994,7 +994,7 @@ function postQuestion() {
 function renderQuestions() {
     const filterBatch = document.getElementById('qa-filter').value;
     const filterCat = document.getElementById('qa-cat-filter').value;
-    const searchText = (document.getElementById('qa-search')?.value || "").toLowerCase";
+    const searchText = (document.getElementById('qa-search')?.value || "").toLowerCase();
     const list = document.getElementById('qa-list');
     list.innerHTML = '<div class="text-gray-500">Loading...</div>';
 
