@@ -83,6 +83,11 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
         <h1 class="font-grotesk text-xl font-bold">Zahira College Mawanella</h1>
     </div>
     <div id="nav-links" class="flex items-center gap-4 md:gap-6">
+        <!-- Universal Back Button -->
+        <button onclick="goBack()" id="global-back-btn" class="hidden hover:text-[var(--accent)] transition text-sm md:text-base flex items-center gap-2">
+            <i class="fas fa-arrow-left"></i> Back
+        </button>
+        
         <button onclick="showSection('home')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Home</button>
         <button onclick="showSection('batches')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Batches</button>
         <button onclick="showSection('qa')" class="hover:text-[var(--accent)] transition text-sm md:text-base">Q&A</button>
@@ -123,17 +128,11 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
     </section>
 
     <section id="batch-categories" class="section hidden">
-        <button onclick="showSection('batches')" class="mb-6 text-gray-400 hover:text-[var(--accent)] flex items-center gap-2 transition">
-            <i class="fas fa-arrow-left"></i> Back to Batches
-        </button>
         <h2 id="cat-section-title" class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Select a Category</h2>
         <div id="cat-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
     </section>
 
     <section id="qa" class="section hidden">
-        <button onclick="showSection('batches')" class="mb-6 text-gray-400 hover:text-[var(--accent)] flex items-center gap-2 transition">
-            <i class="fas fa-arrow-left"></i> Back to Batches
-        </button>
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <h2 class="text-3xl font-grotesk font-bold border-l-4 border-[var(--accent)] pl-4">Questions & Answers</h2>
             <button onclick="document.getElementById('ask-modal').classList.remove('hidden')" class="btn-primary"><i class="fas fa-plus mr-2"></i>Ask Question</button>
@@ -152,9 +151,6 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
 
     <!-- Group Chat Section -->
     <section id="group-chat" class="section hidden">
-        <button onclick="showSection('batches')" class="mb-6 text-gray-400 hover:text-[var(--accent)] flex items-center gap-2 transition">
-            <i class="fas fa-arrow-left"></i> Back to Batches
-        </button>
         <h2 id="gc-title" class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Group Discussion</h2>
         <div class="card p-4 flex flex-col h-[65vh]">
             <div id="gc-window" class="flex-1 overflow-y-auto mb-4 flex flex-col">
@@ -396,7 +392,6 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
-// Configure pdf.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 let currentUser = null;
@@ -407,13 +402,106 @@ let globalBatches = {};
 let globalCategories = {};
 let selectedBatchId = null;
 
-// --- GLOBAL DATA STORES ---
 let allUsers = {};
 let allChatRequests = {};
 let globalChats = {};
 let globalGroupChats = {};
 let globalQuestionsCount = {};
 let globalGroupUnreadCount = {};
+
+// --- NAVIGATION HISTORY LOGIC ---
+let currentSection = 'home';
+let sectionHistory = [];
+
+function showSection(id, skipHistory = false) {
+    if(id !== 'home' && !currentUser) {
+        toggleAuth();
+        return;
+    }
+    
+    if(!skipHistory && currentSection !== id) {
+        sectionHistory.push(currentSection);
+    }
+    currentSection = id;
+
+    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    
+    // Show/hide global back button
+    const backBtn = document.getElementById('global-back-btn');
+    if(sectionHistory.length > 0) {
+        backBtn.classList.remove('hidden');
+    } else {
+        backBtn.classList.add('hidden');
+    }
+
+    if(id === 'batches') loadBatches();
+    if(id === 'qa') { loadDropdowns(); renderQuestions(); }
+    if(id === 'profile') renderUsersList();
+    if(id === 'admin') loadAdminData();
+}
+
+function goBack() {
+    if(sectionHistory.length > 0) {
+        const prevId = sectionHistory.pop();
+        showSection(prevId, true);
+    }
+}
+
+// Override showBatchCategories to use history
+function showBatchCategories(batchId) {
+    selectedBatchId = batchId;
+    const batchData = globalBatches[batchId];
+    const batchName = batchData?.name || 'Batch';
+    document.getElementById('cat-section-title').innerText = batchName + ' - Select a Category';
+    
+    const grid = document.getElementById('cat-grid');
+    grid.innerHTML = '';
+    
+    for(let id in globalCategories) {
+        const c = globalCategories[id];
+        
+        if(batchName === 'Discussion') {
+            const groupId = `${batchId}_${id}`;
+            const unread = globalGroupUnreadCount[groupId] || 0;
+            grid.innerHTML += `
+                <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px] relative" onclick="openGroupChat('${batchId}', '${id}', '${c.name}')">
+                    ${unread > 0 ? `<span class="absolute top-4 right-4 bg-red-600 text-white text-xs rounded-full h-6 min-w-[24px] px-2 flex items-center justify-center font-bold">${unread}</span>` : ''}
+                    <i class="fas fa-users text-4xl text-[var(--accent)] mb-4"></i>
+                    <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${c.name}</h3>
+                    <p class="text-gray-400 mt-2 text-sm">Join Group Chat</p>
+                </div>
+            `;
+        } else {
+            const count = globalQuestionsCount[id] || 0;
+            grid.innerHTML += `
+                <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px] relative" onclick="goToCategoryQA('${batchId}', '${id}')">
+                    ${count > 0 ? `<span class="absolute top-4 right-4 bg-red-600 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold">${count}</span>` : ''}
+                    <i class="fas fa-book-open text-4xl text-[var(--accent)] mb-4"></i>
+                    <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${c.name}</h3>
+                    <p class="text-gray-400 mt-2 text-sm">Enter Q&A Section</p>
+                </div>
+            `;
+        }
+    }
+    
+    if(currentSection !== 'batch-categories') sectionHistory.push(currentSection);
+    currentSection = 'batch-categories';
+    
+    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+    document.getElementById('batch-categories').classList.remove('hidden');
+    
+    const backBtn = document.getElementById('global-back-btn');
+    if(sectionHistory.length > 0) backBtn.classList.remove('hidden'); else backBtn.classList.add('hidden');
+}
+
+function goToCategoryQA(batchId, catId) {
+    showSection('qa');
+    document.getElementById('qa-filter').value = batchId;
+    document.getElementById('qa-cat-filter').value = catId;
+    renderQuestions();
+}
+// --- END NAVIGATION HISTORY LOGIC ---
 
 // --- AI TUTOR LOGIC ---
 let aiMessages = [];
@@ -630,8 +718,15 @@ document.getElementById('gc-file-input').addEventListener('change', function(e) 
 });
 
 function openGroupChat(batchId, catId, catName) {
+    if(currentSection !== 'group-chat') sectionHistory.push(currentSection);
+    currentSection = 'group-chat';
+    
     document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
     document.getElementById('group-chat').classList.remove('hidden');
+    
+    const backBtn = document.getElementById('global-back-btn');
+    if(sectionHistory.length > 0) backBtn.classList.remove('hidden'); else backBtn.classList.add('hidden');
+
     document.getElementById('gc-title').innerText = `${catName} Discussion`;
     
     currentGroupChatId = `${batchId}_${catId}`;
@@ -639,6 +734,9 @@ function openGroupChat(batchId, catId, catName) {
     
     const win = document.getElementById('gc-window');
     win.innerHTML = '<div class="m-auto text-gray-500">Loading messages...</div>';
+    
+    // Instantly mark as read to clear notification badge immediately
+    db.ref('users/' + currentUser.uid + '/lastReadGroup/' + currentGroupChatId).set(Date.now());
     
     groupChatListener = db.ref('groupChats/' + currentGroupChatId);
     groupChatListener.on('value', snap => {
@@ -652,9 +750,7 @@ function openGroupChat(batchId, catId, catName) {
             return;
         }
         
-        let latestTimestamp = 0;
         sortedMsgs.forEach(([id, m]) => {
-            if(m.timestamp > latestTimestamp) latestTimestamp = m.timestamp;
             const isMe = m.sender === currentUser.uid;
             const cls = isMe ? 'chat-me' : 'chat-them';
             const pic = m.pic || 'https://via.placeholder.com/40';
@@ -687,12 +783,6 @@ function openGroupChat(batchId, catId, catName) {
             }
         });
         win.scrollTop = win.scrollHeight;
-        
-        // Mark messages as read if there are new ones
-        const lastReadGroup = currentUserData?.lastReadGroup?.[currentGroupChatId] || 0;
-        if(latestTimestamp > lastReadGroup) {
-            db.ref('users/' + currentUser.uid + '/lastReadGroup/' + currentGroupChatId).set(latestTimestamp);
-        }
     });
 }
 
@@ -857,7 +947,9 @@ function handleAuth() {
 
 function logout() {
     auth.signOut();
-    showSection('home');
+    sectionHistory = [];
+    document.getElementById('global-back-btn').classList.add('hidden');
+    showSection('home', true);
 }
 
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
@@ -926,7 +1018,7 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
         document.getElementById('auth-btn').innerText = "Login";
         document.getElementById('auth-btn').onclick = toggleAuth;
         document.getElementById('admin-nav').classList.add('hidden');
-        showSection('home');
+        showSection('home', true);
       }
     });
   })
@@ -999,66 +1091,6 @@ document.getElementById('profile-pic-input').addEventListener('change', function
     };
     reader.readAsDataURL(file);
 });
-
-function showSection(id) {
-    if(id !== 'home' && !currentUser) {
-        toggleAuth();
-        return;
-    }
-    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
-    if(id === 'batches') loadBatches();
-    if(id === 'qa') { loadDropdowns(); renderQuestions(); }
-    if(id === 'profile') renderUsersList();
-    if(id === 'admin') loadAdminData();
-}
-
-function showBatchCategories(batchId) {
-    selectedBatchId = batchId;
-    const batchData = globalBatches[batchId];
-    const batchName = batchData?.name || 'Batch';
-    document.getElementById('cat-section-title').innerText = batchName + ' - Select a Category';
-    
-    const grid = document.getElementById('cat-grid');
-    grid.innerHTML = '';
-    
-    for(let id in globalCategories) {
-        const c = globalCategories[id];
-        
-        if(batchName === 'Discussion') {
-            const groupId = `${batchId}_${id}`;
-            const unread = globalGroupUnreadCount[groupId] || 0;
-            grid.innerHTML += `
-                <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px] relative" onclick="openGroupChat('${batchId}', '${id}', '${c.name}')">
-                    ${unread > 0 ? `<span class="absolute top-4 right-4 bg-red-600 text-white text-xs rounded-full h-6 min-w-[24px] px-2 flex items-center justify-center font-bold">${unread}</span>` : ''}
-                    <i class="fas fa-users text-4xl text-[var(--accent)] mb-4"></i>
-                    <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${c.name}</h3>
-                    <p class="text-gray-400 mt-2 text-sm">Join Group Chat</p>
-                </div>
-            `;
-        } else {
-            const count = globalQuestionsCount[id] || 0;
-            grid.innerHTML += `
-                <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px] relative" onclick="goToCategoryQA('${batchId}', '${id}')">
-                    ${count > 0 ? `<span class="absolute top-4 right-4 bg-red-600 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold">${count}</span>` : ''}
-                    <i class="fas fa-book-open text-4xl text-[var(--accent)] mb-4"></i>
-                    <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${c.name}</h3>
-                    <p class="text-gray-400 mt-2 text-sm">Enter Q&A Section</p>
-                </div>
-            `;
-        }
-    }
-    
-    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-    document.getElementById('batch-categories').classList.remove('hidden');
-}
-
-function goToCategoryQA(batchId, catId) {
-    showSection('qa');
-    document.getElementById('qa-filter').value = batchId;
-    document.getElementById('qa-cat-filter').value = catId;
-    renderQuestions();
-}
 
 function loadDropdowns() {
     db.ref('batches').on('value', snap => {
@@ -1502,6 +1534,9 @@ function openChat(otherId, otherName, otherPic) {
         </div>`;
     document.getElementById('chat-input-area').classList.remove('hidden');
     
+    // Instantly mark as read to clear notification badge immediately
+    db.ref('users/' + currentUser.uid + '/lastRead/' + otherId).set(Date.now());
+    
     chatListener = db.ref('chats/' + chatId);
     chatListener.on('value', snap => {
         const msgs = snap.val() || {};
@@ -1512,21 +1547,13 @@ function openChat(otherId, otherName, otherPic) {
         
         const canDeleteMsg = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
         
-        let latestTimestamp = 0;
         for(let id in msgs) {
             const m = msgs[id];
-            if(m.timestamp > latestTimestamp) latestTimestamp = m.timestamp;
             const cls = m.sender === currentUser.uid ? 'chat-me' : 'chat-them';
             const deleteBtn = canDeleteMsg ? `<button onclick="deleteChatMsg('${id}')" class="absolute -top-2 -right-2 bg-red-600 rounded-full w-5 h-5 text-xs hidden group-hover:block">x</button>` : '';
             win.innerHTML += `<div class="chat-msg ${cls} group">${m.text} ${deleteBtn}</div>`;
         }
         win.scrollTop = win.scrollHeight;
-        
-        // Mark messages as read if there are new ones
-        const lastRead = currentUserData?.lastRead?.[otherId] || 0;
-        if(latestTimestamp > lastRead) {
-            db.ref('users/' + currentUser.uid + '/lastRead/' + otherId).set(latestTimestamp);
-        }
     });
 }
 
