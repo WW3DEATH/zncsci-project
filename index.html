@@ -640,8 +640,6 @@ function openGroupChat(batchId, catId, catName) {
     const win = document.getElementById('gc-window');
     win.innerHTML = '<div class="m-auto text-gray-500">Loading messages...</div>';
     
-    db.ref('users/' + currentUser.uid + '/lastReadGroup/' + currentGroupChatId).set(Date.now());
-    
     groupChatListener = db.ref('groupChats/' + currentGroupChatId);
     groupChatListener.on('value', snap => {
         const msgs = snap.val() || {};
@@ -654,7 +652,9 @@ function openGroupChat(batchId, catId, catName) {
             return;
         }
         
+        let latestTimestamp = 0;
         sortedMsgs.forEach(([id, m]) => {
+            if(m.timestamp > latestTimestamp) latestTimestamp = m.timestamp;
             const isMe = m.sender === currentUser.uid;
             const cls = isMe ? 'chat-me' : 'chat-them';
             const pic = m.pic || 'https://via.placeholder.com/40';
@@ -687,6 +687,12 @@ function openGroupChat(batchId, catId, catName) {
             }
         });
         win.scrollTop = win.scrollHeight;
+        
+        // Mark messages as read if there are new ones
+        const lastReadGroup = currentUserData?.lastReadGroup?.[currentGroupChatId] || 0;
+        if(latestTimestamp > lastReadGroup) {
+            db.ref('users/' + currentUser.uid + '/lastReadGroup/' + currentGroupChatId).set(latestTimestamp);
+        }
     });
 }
 
@@ -1496,8 +1502,6 @@ function openChat(otherId, otherName, otherPic) {
         </div>`;
     document.getElementById('chat-input-area').classList.remove('hidden');
     
-    db.ref('users/' + currentUser.uid + '/lastRead/' + otherId).set(Date.now());
-    
     chatListener = db.ref('chats/' + chatId);
     chatListener.on('value', snap => {
         const msgs = snap.val() || {};
@@ -1508,13 +1512,21 @@ function openChat(otherId, otherName, otherPic) {
         
         const canDeleteMsg = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
         
+        let latestTimestamp = 0;
         for(let id in msgs) {
             const m = msgs[id];
+            if(m.timestamp > latestTimestamp) latestTimestamp = m.timestamp;
             const cls = m.sender === currentUser.uid ? 'chat-me' : 'chat-them';
             const deleteBtn = canDeleteMsg ? `<button onclick="deleteChatMsg('${id}')" class="absolute -top-2 -right-2 bg-red-600 rounded-full w-5 h-5 text-xs hidden group-hover:block">x</button>` : '';
             win.innerHTML += `<div class="chat-msg ${cls} group">${m.text} ${deleteBtn}</div>`;
         }
         win.scrollTop = win.scrollHeight;
+        
+        // Mark messages as read if there are new ones
+        const lastRead = currentUserData?.lastRead?.[otherId] || 0;
+        if(latestTimestamp > lastRead) {
+            db.ref('users/' + currentUser.uid + '/lastRead/' + otherId).set(latestTimestamp);
+        }
     });
 }
 
