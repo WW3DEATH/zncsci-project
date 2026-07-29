@@ -281,6 +281,14 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
     </section>
 </main>
 
+<!-- File Viewer Modal -->
+<div id="file-viewer-modal" class="modal-bg hidden">
+    <div class="relative w-full h-full max-w-4xl max-h-[90vh] flex flex-col items-center justify-center p-4">
+        <button onclick="closeFileViewer()" class="absolute top-2 right-2 text-white text-3xl z-50 bg-red-600 rounded-full w-10 h-10 flex items-center justify-center hover:bg-red-700">&times;</button>
+        <div id="file-viewer-content" class="w-full h-full flex items-center justify-center bg-black/10 rounded-lg overflow-hidden"></div>
+    </div>
+</div>
+
 <div id="auth-modal" class="modal-bg hidden">
     <div class="card p-8 w-full max-w-md relative">
         <button onclick="toggleAuth()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
@@ -420,6 +428,26 @@ let globalChats = {};
 let globalGroupChats = {};
 let globalQuestionsCount = {};
 let globalGroupUnreadCount = {};
+
+// --- FILE VIEWER LOGIC ---
+function openFileViewer(fileUrl, type) {
+    const modal = document.getElementById('file-viewer-modal');
+    const content = document.getElementById('file-viewer-content');
+    
+    if (type === 'image') {
+        content.innerHTML = `<img src="${fileUrl}" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl">`;
+    } else if (type === 'pdf') {
+        content.innerHTML = `<iframe src="${fileUrl}" class="w-full h-[90vh] rounded-lg shadow-2xl" frameborder="0"></iframe>`;
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+function closeFileViewer() {
+    document.getElementById('file-viewer-modal').classList.add('hidden');
+    document.getElementById('file-viewer-content').innerHTML = ''; // Clear to stop memory usage
+}
+// --- END FILE VIEWER LOGIC ---
 
 // --- NAVIGATION HISTORY LOGIC ---
 let currentSection = 'home';
@@ -811,9 +839,9 @@ function openGroupChat(batchId, catId, catName) {
             let fileHtml = '';
             if(m.file) {
                 if(m.file.includes('data:image')) {
-                    fileHtml = `<img src="${m.file}" class="mt-2 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="window.open('${m.file}', '_blank')">`;
+                    fileHtml = `<img src="${m.file}" class="mt-2 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="openFileViewer(this.src, 'image')">`;
                 } else {
-                    fileHtml = `<a href="${m.file}" download="${m.fileName || 'file'}" class="mt-2 inline-flex items-center gap-2 text-blue-400 underline text-sm"><i class="fas fa-file-pdf"></i> ${m.fileName || 'View PDF'}</a>`;
+                    fileHtml = `<a href="${m.file}" onclick="openFileViewer(this.href, 'pdf'); return false;" class="mt-2 inline-flex items-center gap-2 text-blue-400 underline text-sm cursor-pointer"><i class="fas fa-file-pdf"></i> View PDF</a>`;
                 }
             }
             
@@ -1348,11 +1376,30 @@ function renderQuestions() {
             const batchName = globalBatches[q.batch]?.name || 'Unknown Batch';
             const catName = globalCategories[q.category]?.name || 'General';
             
+            let qFileHtml = '';
+            if(q.file) {
+                if(q.file.includes('data:image')) {
+                    qFileHtml = `<img src="${q.file}" class="mb-3 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="openFileViewer(this.src, 'image')">`;
+                } else {
+                    qFileHtml = `<a href="${q.file}" onclick="openFileViewer(this.href, 'pdf'); return false;" class="mb-3 inline-flex items-center gap-2 text-blue-400 underline text-sm cursor-pointer"><i class="fas fa-file-pdf"></i> View PDF Attachment</a>`;
+                }
+            }
+
             let repliesHtml = '';
             if(q.replies) {
                 for(let rId in q.replies) {
                     const r = q.replies[rId];
                     const canDeleteReply = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
+                    
+                    let rFileHtml = '';
+                    if(r.file) {
+                        if(r.file.includes('data:image')) {
+                            rFileHtml = `<img src="${r.file}" class="mt-2 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="openFileViewer(this.src, 'image')">`;
+                        } else {
+                            rFileHtml = `<a href="${r.file}" onclick="openFileViewer(this.href, 'pdf'); return false;" class="mt-2 inline-flex items-center gap-2 text-blue-400 underline text-sm cursor-pointer"><i class="fas fa-file-pdf"></i> View PDF</a>`;
+                        }
+                    }
+
                     repliesHtml += `
                         <div class="mt-3 pl-4 border-l-2 border-[var(--muted)]">
                             <div class="flex justify-between items-center">
@@ -1363,7 +1410,7 @@ function renderQuestions() {
                                 ${canDeleteReply ? `<button onclick="deleteReply('${id}', '${rId}')" class="text-red-500 text-xs hover:text-red-400"><i class="fas fa-trash"></i></button>` : ''}
                             </div>
                             ${r.text ? `<p class="text-gray-300 mt-1 ml-10">${r.text}</p>` : ''}
-                            ${r.file ? `<a href="${r.file}" download="${r.fileName || 'file'}" class="text-blue-400 underline text-sm mt-1 ml-10 inline-block"><i class="fas fa-paperclip"></i> ${r.fileName || 'View Attachment'}</a>` : ''}
+                            <div class="ml-10">${rFileHtml}</div>
                         </div>
                     `;
                 }
@@ -1380,9 +1427,9 @@ function renderQuestions() {
                     let answerFileHtml = '';
                     if (q.answer.file) {
                         if (q.answer.file.includes('data:image')) {
-                            answerFileHtml = `<img src="${q.answer.file}" class="mt-2 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="window.open('${q.answer.file}', '_blank')">`;
+                            answerFileHtml = `<img src="${q.answer.file}" class="mt-2 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="openFileViewer(this.src, 'image')">`;
                         } else {
-                            answerFileHtml = `<a href="${q.answer.file}" download="${q.answer.fileName || 'file'}" class="mt-2 inline-flex items-center gap-2 text-blue-400 underline text-sm"><i class="fas fa-file-pdf"></i> ${q.answer.fileName || 'View PDF'}</a>`;
+                            answerFileHtml = `<a href="${q.answer.file}" onclick="openFileViewer(this.href, 'pdf'); return false;" class="mt-2 inline-flex items-center gap-2 text-blue-400 underline text-sm cursor-pointer"><i class="fas fa-file-pdf"></i> View PDF</a>`;
                         }
                     }
                     answerHtml = `
@@ -1413,7 +1460,7 @@ function renderQuestions() {
                         </div>
                     </div>
                     <p class="text-gray-400 mb-3">${q.body}</p>
-                    ${q.file ? `<a href="${q.file}" download="${q.fileName || 'file'}" class="text-blue-400 underline text-sm mb-3 inline-block"><i class="fas fa-paperclip"></i> ${q.fileName || 'View Attachment'}</a>` : ''}
+                    ${qFileHtml}
                     <div class="flex items-center gap-2 mt-2">
                         <img src="${q.authorPic || 'https://via.placeholder.com/40'}" class="avatar-sm">
                         <p class="text-sm text-gray-500">Asked by ${q.authorName} (${q.authorRole})</p>
@@ -1632,13 +1679,21 @@ function openChat(otherId, otherName, otherPic) {
         
         const canDeleteMsg = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
         
+        let latestTimestamp = 0;
         for(let id in msgs) {
             const m = msgs[id];
+            if(m.timestamp > latestTimestamp) latestTimestamp = m.timestamp;
             const cls = m.sender === currentUser.uid ? 'chat-me' : 'chat-them';
             const deleteBtn = canDeleteMsg ? `<button onclick="deleteChatMsg('${id}')" class="absolute -top-2 -right-2 bg-red-600 rounded-full w-5 h-5 text-xs hidden group-hover:block">x</button>` : '';
             win.innerHTML += `<div class="chat-msg ${cls} group">${m.text} ${deleteBtn}</div>`;
         }
         win.scrollTop = win.scrollHeight;
+        
+        // Mark messages as read if there are new ones
+        const lastRead = currentUserData?.lastRead?.[otherId] || 0;
+        if(latestTimestamp > lastRead) {
+            db.ref('users/' + currentUser.uid + '/lastRead/' + otherId).set(latestTimestamp);
+        }
     });
 }
 
