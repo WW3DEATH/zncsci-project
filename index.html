@@ -262,16 +262,26 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
                 </div>
                 <div id="admin-cat-list" class="space-y-2"></div>
             </div>
-            <div class="card p-6 md:col-span-2 lg:col-span-1">
+            
+            <!-- Redesigned Monitor Personal Chats -->
+            <div class="card p-6 md:col-span-2 lg:col-span-3">
                 <h3 class="text-xl font-bold mb-4 text-[var(--accent2)]">Monitor Personal Chats</h3>
-                <p class="text-sm text-gray-400 mb-4">Select two users to view their private conversation.</p>
-                <div class="flex flex-col gap-2 mb-4">
-                    <select id="admin-user1"></select>
-                    <select id="admin-user2"></select>
-                    <button onclick="adminViewChat()" class="btn-primary">View Chat</button>
+                <p class="text-sm text-gray-400 mb-4">Search for a user by name or email to see their chat history.</p>
+                <div class="flex gap-2 mb-4">
+                    <input id="admin-search-name" placeholder="Enter user name or email..." class="flex-1">
+                    <button onclick="searchUserChats()" class="btn-primary">Search</button>
                 </div>
-                <div id="admin-chat-window" class="h-48 overflow-y-auto bg-black/20 p-4 rounded flex flex-col"></div>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="md:col-span-1 space-y-2 max-h-48 overflow-y-auto">
+                        <div id="admin-user-search-results" class="space-y-2"></div>
+                        <div id="admin-chat-partners-list" class="space-y-2 hidden"></div>
+                    </div>
+                    <div id="admin-chat-window" class="md:col-span-2 h-48 overflow-y-auto bg-black/20 p-4 rounded flex flex-col">
+                        <div class="m-auto text-gray-500 text-sm text-center">Search results and conversations will appear here</div>
+                    </div>
+                </div>
             </div>
+
             <div class="card p-6 md:col-span-2 lg:col-span-3">
                 <h3 class="text-xl font-bold mb-4 text-[var(--accent2)]">Manage User Roles & Accounts</h3>
                 <p class="text-sm text-gray-400 mb-4">Assign roles or delete users from the database.</p>
@@ -445,7 +455,7 @@ function openFileViewer(fileUrl, type) {
 
 function closeFileViewer() {
     document.getElementById('file-viewer-modal').classList.add('hidden');
-    document.getElementById('file-viewer-content').innerHTML = ''; // Clear to stop memory usage
+    document.getElementById('file-viewer-content').innerHTML = ''; 
 }
 // --- END FILE VIEWER LOGIC ---
 
@@ -540,6 +550,112 @@ function goToCategoryQA(batchId, catId) {
     renderQuestions();
 }
 // --- END NAVIGATION HISTORY LOGIC ---
+
+// --- ADMIN CHAT MONITOR LOGIC ---
+function searchUserChats() {
+    const searchTerm = document.getElementById('admin-search-name').value.toLowerCase();
+    const resultsDiv = document.getElementById('admin-user-search-results');
+    const partnersDiv = document.getElementById('admin-chat-partners-list');
+    const chatWindowDiv = document.getElementById('admin-chat-window');
+    
+    resultsDiv.innerHTML = '';
+    partnersDiv.innerHTML = '';
+    partnersDiv.classList.add('hidden');
+    chatWindowDiv.innerHTML = '<div class="m-auto text-gray-500 text-sm text-center">Select a chat to view</div>';
+
+    if(!searchTerm) return;
+
+    let found = false;
+    Object.keys(allUsers).forEach(uid => {
+        const u = allUsers[uid];
+        if(u.name.toLowerCase().includes(searchTerm) || u.email.toLowerCase().includes(searchTerm)) {
+            found = true;
+            resultsDiv.innerHTML += `
+                <div onclick="findChatPartners('${uid}')" class="p-2 bg-black/20 rounded cursor-pointer hover:bg-black/40 text-sm">
+                    ${u.name} <span class="text-gray-500 text-xs">(${u.email})</span>
+                </div>
+            `;
+        }
+    });
+
+    if(!found) {
+        resultsDiv.innerHTML = '<p class="text-gray-500 text-sm p-2">No users found.</p>';
+    }
+}
+
+function findChatPartners(targetUid) {
+    const partnersDiv = document.getElementById('admin-chat-partners-list');
+    const chatWindowDiv = document.getElementById('admin-chat-window');
+    
+    partnersDiv.innerHTML = '';
+    chatWindowDiv.innerHTML = '<div class="m-auto text-gray-500 text-sm text-center">Select a conversation</div>';
+    
+    let foundChats = false;
+    for(let chatId in globalChats) {
+        if(chatId.includes(targetUid)) {
+            foundChats = true;
+            const uids = chatId.split('_');
+            const otherUid = uids[0] === targetUid ? uids[1] : uids[0];
+            const partner = allUsers[otherUid];
+            const partnerName = partner ? partner.name : 'Unknown User';
+            
+            partnersDiv.innerHTML += `
+                <div onclick="adminViewChat('${targetUid}', '${otherUid}')" class="p-2 bg-black/20 rounded cursor-pointer hover:bg-black/40 text-sm flex items-center gap-2">
+                    <i class="fas fa-comment text-[var(--accent)]"></i> ${partnerName}
+                </div>
+            `;
+        }
+    }
+    
+    if(foundChats) {
+        partnersDiv.classList.remove('hidden');
+    } else {
+        partnersDiv.innerHTML = '<p class="text-gray-500 text-sm p-2">No chats found for this user.</p>';
+        partnersDiv.classList.remove('hidden');
+    }
+}
+
+function adminViewChat(u1, u2) {
+    const chatId = [u1, u2].sort().join('_');
+    const win = document.getElementById('admin-chat-window');
+    win.innerHTML = '';
+    
+    const msgs = globalChats[chatId] || {};
+    const u1Name = allUsers[u1]?.name || 'User 1';
+    const u2Name = allUsers[u2]?.name || 'User 2';
+    
+    const sortedMsgs = Object.entries(msgs).sort((a, b) => a[1].timestamp - b[1].timestamp);
+    
+    if(sortedMsgs.length === 0) {
+        win.innerHTML = '<div class="m-auto text-gray-500 text-sm text-center">No messages found.</div>';
+        return;
+    }
+    
+    sortedMsgs.forEach(([id, m]) => {
+        const isU1 = m.sender === u1;
+        const cls = isU1 ? 'chat-them' : 'chat-me';
+        const senderName = isU1 ? u1Name : u2Name;
+        
+        let fileHtml = '';
+        if(m.file) {
+            if(m.file.includes('data:image')) {
+                fileHtml = `<img src="${m.file}" class="mt-2 rounded-lg max-w-full max-h-40 object-cover cursor-pointer" onclick="openFileViewer(this.src, 'image')">`;
+            } else {
+                fileHtml = `<a href="${m.file}" onclick="openFileViewer(this.href, 'pdf'); return false;" class="mt-2 inline-flex items-center gap-2 text-blue-400 underline text-xs cursor-pointer"><i class="fas fa-file-pdf"></i> View PDF</a>`;
+            }
+        }
+        
+        win.innerHTML += `
+            <div class="chat-msg ${cls}" style="max-width: 90%; margin-bottom: 6px; font-size: 0.85rem;">
+                <strong class="block text-xs opacity-70 mb-1">${senderName}</strong>
+                ${m.text ? `<div>${m.text}</div>` : ''}
+                ${fileHtml}
+            </div>
+        `;
+    });
+    win.scrollTop = win.scrollHeight;
+}
+// --- END ADMIN CHAT MONITOR LOGIC ---
 
 // --- OFFICIAL ANSWER LOGIC ---
 let currentAnswerQuestionId = null;
@@ -1418,7 +1534,6 @@ function renderQuestions() {
 
             const canDeleteQ = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
             
-            // Official Answer Logic
             const is2028 = q.batch === 'batch_2028';
             const isAuthor = q.authorId === currentUser.uid;
             let answerHtml = '';
@@ -1533,13 +1648,9 @@ function renderUsersList() {
     
     const list = document.getElementById('users-list');
     const adminUserList = document.getElementById('admin-user-list');
-    const u1 = document.getElementById('admin-user1');
-    const u2 = document.getElementById('admin-user2');
     
     if(list) list.innerHTML = '';
     if(adminUserList) adminUserList.innerHTML = '';
-    if(u1) u1.innerHTML = '<option value="">Select User 1</option>';
-    if(u2) u2.innerHTML = '<option value="">Select User 2</option>';
     
     Object.keys(allUsers).forEach(uid => {
         const u = allUsers[uid];
@@ -1582,8 +1693,6 @@ function renderUsersList() {
                     </div>
                 `;
             }
-            if(u1) u1.innerHTML += `<option value="${uid}">${u.name} (${u.role})</option>`;
-            if(u2) u2.innerHTML += `<option value="${uid}">${u.name} (${u.role})</option>`;
         }
     });
 }
@@ -1689,7 +1798,6 @@ function openChat(otherId, otherName, otherPic) {
         }
         win.scrollTop = win.scrollHeight;
         
-        // Mark messages as read if there are new ones
         const lastRead = currentUserData?.lastRead?.[otherId] || 0;
         if(latestTimestamp > lastRead) {
             db.ref('users/' + currentUser.uid + '/lastRead/' + otherId).set(latestTimestamp);
@@ -1749,34 +1857,6 @@ function editCategory(id) {
 }
 function deleteCategory(id) {
     if(confirm("Delete this category?")) db.ref('categories/' + id).remove();
-}
-
-function adminViewChat() {
-    const u1 = document.getElementById('admin-user1').value;
-    const u2 = document.getElementById('admin-user2').value;
-    if(!u1 || !u2 || u1 === u2) return alert("Select two different users");
-    
-    const chatId = [u1, u2].sort().join('_');
-    const win = document.getElementById('admin-chat-window');
-    win.innerHTML = '<div class="text-gray-500">Loading...</div>';
-    
-    db.ref('chats/' + chatId).once('value').then(snap => {
-        const msgs = snap.val() || {};
-        win.innerHTML = '';
-        if(Object.keys(msgs).length === 0) win.innerHTML = '<div class="text-gray-500">No messages found between these users.</div>';
-        
-        const u1Name = document.getElementById('admin-user1').selectedOptions[0].text.split(' (')[0];
-        const u2Name = document.getElementById('admin-user2').selectedOptions[0].text.split(' (')[0];
-        
-        for(let id in msgs) {
-            const m = msgs[id];
-            const isU1 = m.sender === u1;
-            const cls = isU1 ? 'chat-them' : 'chat-me';
-            const senderName = isU1 ? u1Name : u2Name;
-            win.innerHTML += `<div class="chat-msg ${cls}"><strong class="block text-xs opacity-50">${senderName}</strong>${m.text}</div>`;
-        }
-        win.scrollTop = win.scrollHeight;
-    });
 }
 
 loadDropdowns();
