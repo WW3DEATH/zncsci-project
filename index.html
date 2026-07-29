@@ -266,18 +266,23 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
             <!-- Redesigned Monitor Personal Chats -->
             <div class="card p-6 md:col-span-2 lg:col-span-3">
                 <h3 class="text-xl font-bold mb-4 text-[var(--accent2)]">Monitor Personal Chats</h3>
-                <p class="text-sm text-gray-400 mb-4">Search for a user by name or email to see their chat history.</p>
-                <div class="flex gap-2 mb-4">
-                    <input id="admin-search-name" placeholder="Enter user name or email..." class="flex-1">
-                    <button onclick="searchUserChats()" class="btn-primary">Search</button>
-                </div>
-                <div class="grid md:grid-cols-3 gap-4">
-                    <div class="md:col-span-1 space-y-2 max-h-48 overflow-y-auto">
-                        <div id="admin-user-search-results" class="space-y-2"></div>
-                        <div id="admin-chat-partners-list" class="space-y-2 hidden"></div>
+                <p class="text-sm text-gray-400 mb-4">Click a user to see their chat partners, then click a partner to view the conversation.</p>
+                <div class="grid md:grid-cols-3 gap-4 h-[400px]">
+                    <!-- Column 1: All Users -->
+                    <div class="md:col-span-1 overflow-y-auto bg-black/20 p-2 rounded-lg">
+                        <h4 class="text-xs font-bold text-gray-500 mb-2 px-2 uppercase">All Users</h4>
+                        <div id="admin-chat-user-list" class="space-y-1"></div>
                     </div>
-                    <div id="admin-chat-window" class="md:col-span-2 h-48 overflow-y-auto bg-black/20 p-4 rounded flex flex-col">
-                        <div class="m-auto text-gray-500 text-sm text-center">Search results and conversations will appear here</div>
+                    <!-- Column 2: Chat Partners -->
+                    <div class="md:col-span-1 overflow-y-auto bg-black/20 p-2 rounded-lg">
+                        <h4 class="text-xs font-bold text-gray-500 mb-2 px-2 uppercase">Chat Partners</h4>
+                        <div id="admin-chat-partners-list" class="space-y-1">
+                            <p class="text-gray-500 text-sm p-2">Select a user first</p>
+                        </div>
+                    </div>
+                    <!-- Column 3: Messages -->
+                    <div id="admin-chat-window" class="md:col-span-1 overflow-y-auto bg-black/20 p-4 rounded-lg flex flex-col">
+                        <div class="m-auto text-gray-500 text-sm text-center">Messages will appear here</div>
                     </div>
                 </div>
             </div>
@@ -324,7 +329,7 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
 
 <div id="ask-modal" class="modal-bg hidden">
     <div class="card p-8 w-full max-w-lg relative">
-        <button onclick="document.getElementById('ask-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+        <button onclick="document.getElementById('ask-modal').classList.remove('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
         <h2 class="text-2xl font-bold mb-6 text-[var(--accent)]">Ask a Question</h2>
         <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
@@ -552,35 +557,30 @@ function goToCategoryQA(batchId, catId) {
 // --- END NAVIGATION HISTORY LOGIC ---
 
 // --- ADMIN CHAT MONITOR LOGIC ---
-function searchUserChats() {
-    const searchTerm = document.getElementById('admin-search-name').value.toLowerCase();
-    const resultsDiv = document.getElementById('admin-user-search-results');
+function renderAdminChatMonitor() {
+    const listDiv = document.getElementById('admin-chat-user-list');
     const partnersDiv = document.getElementById('admin-chat-partners-list');
     const chatWindowDiv = document.getElementById('admin-chat-window');
     
-    resultsDiv.innerHTML = '';
-    partnersDiv.innerHTML = '';
-    partnersDiv.classList.add('hidden');
-    chatWindowDiv.innerHTML = '<div class="m-auto text-gray-500 text-sm text-center">Select a chat to view</div>';
+    if(!listDiv) return;
+    
+    listDiv.innerHTML = '';
+    partnersDiv.innerHTML = '<p class="text-gray-500 text-sm p-2">Select a user first</p>';
+    chatWindowDiv.innerHTML = '<div class="m-auto text-gray-500 text-sm text-center">Messages will appear here</div>';
 
-    if(!searchTerm) return;
-
-    let found = false;
     Object.keys(allUsers).forEach(uid => {
         const u = allUsers[uid];
-        if(u.name.toLowerCase().includes(searchTerm) || u.email.toLowerCase().includes(searchTerm)) {
-            found = true;
-            resultsDiv.innerHTML += `
-                <div onclick="findChatPartners('${uid}')" class="p-2 bg-black/20 rounded cursor-pointer hover:bg-black/40 text-sm">
-                    ${u.name} <span class="text-gray-500 text-xs">(${u.email})</span>
+        const pic = u.profilePic || 'https://via.placeholder.com/40';
+        listDiv.innerHTML += `
+            <div onclick="findChatPartners('${uid}')" class="p-2 bg-black/20 rounded cursor-pointer hover:bg-black/40 text-sm flex items-center gap-2">
+                <img src="${pic}" class="avatar-sm">
+                <div>
+                    <p class="font-semibold">${u.name}</p>
+                    <p class="text-xs text-gray-500">${u.email}</p>
                 </div>
-            `;
-        }
+            </div>
+        `;
     });
-
-    if(!found) {
-        resultsDiv.innerHTML = '<p class="text-gray-500 text-sm p-2">No users found.</p>';
-    }
 }
 
 function findChatPartners(targetUid) {
@@ -598,20 +598,19 @@ function findChatPartners(targetUid) {
             const otherUid = uids[0] === targetUid ? uids[1] : uids[0];
             const partner = allUsers[otherUid];
             const partnerName = partner ? partner.name : 'Unknown User';
+            const partnerPic = partner?.profilePic || 'https://via.placeholder.com/40';
             
             partnersDiv.innerHTML += `
                 <div onclick="adminViewChat('${targetUid}', '${otherUid}')" class="p-2 bg-black/20 rounded cursor-pointer hover:bg-black/40 text-sm flex items-center gap-2">
-                    <i class="fas fa-comment text-[var(--accent)]"></i> ${partnerName}
+                    <img src="${partnerPic}" class="avatar-sm">
+                    <span>${partnerName}</span>
                 </div>
             `;
         }
     }
     
-    if(foundChats) {
-        partnersDiv.classList.remove('hidden');
-    } else {
+    if(!foundChats) {
         partnersDiv.innerHTML = '<p class="text-gray-500 text-sm p-2">No chats found for this user.</p>';
-        partnersDiv.classList.remove('hidden');
     }
 }
 
@@ -1176,6 +1175,7 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
             allUsers = snap.val() || {}; 
             renderUsersList(); 
             renderChatLists(); 
+            renderAdminChatMonitor(); // Update admin monitor list when users change
         });
         db.ref('chatRequests').on('value', snap => { 
             allChatRequests = snap.val() || {}; 
@@ -1829,6 +1829,7 @@ function sendMessage() {
 function loadAdminData() {
     loadDropdowns(); 
     renderUsersList();
+    renderAdminChatMonitor();
 }
 
 function addBatch() {
