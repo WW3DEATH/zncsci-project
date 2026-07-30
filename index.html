@@ -147,23 +147,23 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
         <div id="qa-list" class="space-y-4"></div>
     </section>
 
-    <!-- Group Chat Section -->
-    <section id="group-chat" class="section hidden">
-        <h2 id="gc-title" class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Group Discussion</h2>
+    <!-- Question Room Chat Section -->
+    <section id="question-room" class="section hidden">
+        <h2 id="qr-title" class="text-3xl font-grotesk font-bold mb-6 border-l-4 border-[var(--accent)] pl-4">Discussion Room</h2>
         <div class="card p-4 flex flex-col h-[65vh]">
-            <div id="gc-window" class="flex-1 overflow-y-auto mb-4 flex flex-col">
+            <div id="qr-window" class="flex-1 overflow-y-auto mb-4 flex flex-col">
                 <div class="m-auto text-gray-500 text-center">Loading messages...</div>
             </div>
             
-            <div id="gc-file-preview" class="mb-2 hidden"></div>
+            <div id="qr-file-preview" class="mb-2 hidden"></div>
             
             <div class="flex gap-2 items-center">
-                <input type="file" id="gc-file-input" accept="image/*, application/pdf" class="hidden">
-                <button onclick="document.getElementById('gc-file-input').click()" class="btn-primary px-3 py-2 text-sm" title="Upload Image or PDF (Max 5MB)">
+                <input type="file" id="qr-file-input" accept="image/*, application/pdf" class="hidden">
+                <button onclick="document.getElementById('qr-file-input').click()" class="btn-primary px-3 py-2 text-sm" title="Upload Image or PDF (Max 5MB)">
                     <i class="fas fa-paperclip"></i>
                 </button>
-                <input id="gc-msg" placeholder="Type your message to the group..." onkeypress="if(event.key==='Enter')sendGroupMessage()" class="flex-1">
-                <button onclick="sendGroupMessage()" class="btn-primary"><i class="fas fa-paper-plane"></i></button>
+                <input id="qr-msg" placeholder="Type your message..." onkeypress="if(event.key==='Enter')sendQuestionRoomMessage()" class="flex-1">
+                <button onclick="sendQuestionRoomMessage()" class="btn-primary"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
     </section>
@@ -329,7 +329,7 @@ body.light-mode .border-\[var\(--muted\)\]{border-color:#ccc !important}
 
 <div id="ask-modal" class="modal-bg hidden">
     <div class="card p-8 w-full max-w-lg relative">
-        <button onclick="document.getElementById('ask-modal').classList.remove('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+        <button onclick="document.getElementById('ask-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
         <h2 class="text-2xl font-bold mb-6 text-[var(--accent)]">Ask a Question</h2>
         <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
@@ -440,9 +440,7 @@ let selectedBatchId = null;
 let allUsers = {};
 let allChatRequests = {};
 let globalChats = {};
-let globalGroupChats = {};
 let globalQuestionsCount = {};
-let globalGroupUnreadCount = {};
 
 // --- FILE VIEWER LOGIC ---
 function openFileViewer(fileUrl, type) {
@@ -513,29 +511,15 @@ function showBatchCategories(batchId) {
     
     for(let id in globalCategories) {
         const c = globalCategories[id];
-        
-        if(batchName === 'Discussion') {
-            const groupId = `${batchId}_${id}`;
-            const unread = globalGroupUnreadCount[groupId] || 0;
-            grid.innerHTML += `
-                <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px] relative" onclick="openGroupChat('${batchId}', '${id}', '${c.name}')">
-                    ${unread > 0 ? `<span class="absolute top-4 right-4 bg-red-600 text-white text-xs rounded-full h-6 min-w-[24px] px-2 flex items-center justify-center font-bold">${unread}</span>` : ''}
-                    <i class="fas fa-users text-4xl text-[var(--accent)] mb-4"></i>
-                    <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${c.name}</h3>
-                    <p class="text-gray-400 mt-2 text-sm">Join Group Chat</p>
-                </div>
-            `;
-        } else {
-            const count = globalQuestionsCount[id] || 0;
-            grid.innerHTML += `
-                <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px] relative" onclick="goToCategoryQA('${batchId}', '${id}')">
-                    ${count > 0 ? `<span class="absolute top-4 right-4 bg-red-600 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold">${count}</span>` : ''}
-                    <i class="fas fa-book-open text-4xl text-[var(--accent)] mb-4"></i>
-                    <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${c.name}</h3>
-                    <p class="text-gray-400 mt-2 text-sm">Enter Q&A Section</p>
-                </div>
-            `;
-        }
+        const count = globalQuestionsCount[id] || 0;
+        grid.innerHTML += `
+            <div class="card p-8 cursor-pointer flex flex-col items-center justify-center text-center min-h-[180px] relative" onclick="goToCategoryQA('${batchId}', '${id}')">
+                ${count > 0 ? `<span class="absolute top-4 right-4 bg-red-600 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold">${count}</span>` : ''}
+                <i class="fas fa-book-open text-4xl text-[var(--accent)] mb-4"></i>
+                <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${c.name}</h3>
+                <p class="text-gray-400 mt-2 text-sm">Enter Q&A Section</p>
+            </div>
+        `;
     }
     
     if(currentSection !== 'batch-categories') sectionHistory.push(currentSection);
@@ -555,6 +539,161 @@ function goToCategoryQA(batchId, catId) {
     renderQuestions();
 }
 // --- END NAVIGATION HISTORY LOGIC ---
+
+// --- QUESTION ROOM LOGIC ---
+let currentQuestionRoomId = null;
+let questionRoomListener = null;
+
+function clearQRAttachment() {
+    document.getElementById('qr-file-input').value = '';
+    const preview = document.getElementById('qr-file-preview');
+    preview.classList.add('hidden');
+    preview.innerHTML = '';
+}
+
+document.getElementById('qr-file-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+    
+    if(file.size > 5 * 1024 * 1024) {
+        alert("File too large. Max 5MB.");
+        this.value = '';
+        return;
+    }
+
+    const previewDiv = document.getElementById('qr-file-preview');
+    previewDiv.innerHTML = '';
+    previewDiv.classList.remove('hidden');
+
+    if(file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            previewDiv.innerHTML = `
+                <div class="relative inline-block">
+                    <img src="${ev.target.result}" class="h-20 w-20 object-cover rounded-lg border border-[var(--accent)]">
+                    <button onclick="clearQRAttachment()" class="absolute -top-2 -right-2 bg-red-600 rounded-full w-5 h-5 text-xs text-white">x</button>
+                </div>`;
+        };
+        reader.readAsDataURL(file);
+    } else if(file.type === 'application/pdf') {
+        previewDiv.innerHTML = `
+            <div class="relative bg-black/20 p-2 rounded-lg flex items-center gap-2 max-w-xs">
+                <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+                <span class="text-sm truncate flex-1">${file.name}</span>
+                <button onclick="clearQRAttachment()" class="text-red-500 text-sm">x</button>
+            </div>`;
+    } else {
+        alert("Only images and PDFs are supported.");
+        this.value = '';
+        previewDiv.classList.add('hidden');
+    }
+});
+
+function openQuestionRoom(qId, qTitle) {
+    // Set hasRoom to true in DB so button changes for everyone
+    db.ref('questions/' + qId).update({ hasRoom: true });
+    
+    if(currentSection !== 'question-room') sectionHistory.push(currentSection);
+    currentSection = 'question-room';
+    
+    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+    document.getElementById('question-room').classList.remove('hidden');
+    
+    const backBtn = document.getElementById('global-back-btn');
+    if(sectionHistory.length > 0) backBtn.classList.remove('hidden'); else backBtn.classList.add('hidden');
+
+    document.getElementById('qr-title').innerText = `Room: ${qTitle.substring(0, 30)}${qTitle.length > 30 ? '...' : ''}`;
+    
+    currentQuestionRoomId = qId;
+    if(questionRoomListener) questionRoomListener.off();
+    
+    const win = document.getElementById('qr-window');
+    win.innerHTML = '<div class="m-auto text-gray-500">Loading messages...</div>';
+    
+    questionRoomListener = db.ref('questionRooms/' + currentQuestionRoomId);
+    questionRoomListener.on('value', snap => {
+        const msgs = snap.val() || {};
+        win.innerHTML = '';
+        
+        const sortedMsgs = Object.entries(msgs).sort((a, b) => a[1].timestamp - b[1].timestamp);
+        
+        if(sortedMsgs.length === 0) {
+            win.innerHTML = '<div class="m-auto text-gray-500 text-center">No messages yet. Start the discussion!</div>';
+            return;
+        }
+        
+        sortedMsgs.forEach(([id, m]) => {
+            const isMe = m.sender === currentUser.uid;
+            const cls = isMe ? 'chat-me' : 'chat-them';
+            const pic = m.pic || 'https://via.placeholder.com/40';
+            
+            let fileHtml = '';
+            if(m.file) {
+                if(m.file.includes('data:image')) {
+                    fileHtml = `<img src="${m.file}" class="mt-2 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="openFileViewer(this.src, 'image')">`;
+                } else {
+                    fileHtml = `<a href="${m.file}" onclick="openFileViewer(this.href, 'pdf'); return false;" class="mt-2 inline-flex items-center gap-2 text-blue-400 underline text-sm cursor-pointer"><i class="fas fa-file-pdf"></i> View PDF</a>`;
+                }
+            }
+            
+            if(isMe) {
+                win.innerHTML += `
+                    <div class="chat-msg ${cls}">
+                        ${m.text ? `<div>${m.text}</div>` : ''}
+                        ${fileHtml}
+                    </div>`;
+            } else {
+                win.innerHTML += `
+                    <div class="chat-msg ${cls}">
+                        <div class="inline-flex items-center gap-2 mb-1">
+                            <img src="${pic}" class="avatar-sm">
+                            <span class="text-xs font-bold text-[var(--accent2)]">${m.name}</span>
+                        </div>
+                        ${m.text ? `<div>${m.text}</div>` : ''}
+                        ${fileHtml}
+                    </div>`;
+            }
+        });
+        win.scrollTop = win.scrollHeight;
+    });
+}
+
+function sendQuestionRoomMessage() {
+    const input = document.getElementById('qr-msg');
+    const text = input.value.trim();
+    const fileInput = document.getElementById('qr-file-input');
+    const file = fileInput.files[0];
+
+    if(!text && !file) return;
+
+    const msgData = {
+        sender: currentUser.uid,
+        name: currentUserData.name,
+        pic: currentUserData.profilePic || "",
+        text: text || "",
+        timestamp: Date.now()
+    };
+
+    if(file) {
+        if(file.size > 5242880) {
+            alert("File too large. Max 5MB.");
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            msgData.file = e.target.result;
+            msgData.fileName = file.name;
+            db.ref('questionRooms/' + currentQuestionRoomId).push(msgData);
+            input.value = '';
+            clearQRAttachment();
+        };
+        reader.readAsDataURL(file);
+    } else {
+        db.ref('questionRooms/' + currentQuestionRoomId).push(msgData);
+        input.value = '';
+    }
+}
+// --- END QUESTION ROOM LOGIC ---
 
 // --- ADMIN CHAT MONITOR LOGIC ---
 function renderAdminChatMonitor() {
@@ -865,177 +1004,7 @@ async function askAI() {
 }
 // --- END AI TUTOR LOGIC ---
 
-// --- GROUP CHAT LOGIC ---
-let groupChatListener = null;
-let currentGroupChatId = null;
-
-function clearGCAttachment() {
-    document.getElementById('gc-file-input').value = '';
-    const preview = document.getElementById('gc-file-preview');
-    preview.classList.add('hidden');
-    preview.innerHTML = '';
-}
-
-document.getElementById('gc-file-input').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if(!file) return;
-    
-    if(file.size > 5 * 1024 * 1024) {
-        alert("File too large. Max 5MB.");
-        this.value = '';
-        return;
-    }
-
-    const previewDiv = document.getElementById('gc-file-preview');
-    previewDiv.innerHTML = '';
-    previewDiv.classList.remove('hidden');
-
-    if(file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-            previewDiv.innerHTML = `
-                <div class="relative inline-block">
-                    <img src="${ev.target.result}" class="h-20 w-20 object-cover rounded-lg border border-[var(--accent)]">
-                    <button onclick="clearGCAttachment()" class="absolute -top-2 -right-2 bg-red-600 rounded-full w-5 h-5 text-xs text-white">x</button>
-                </div>`;
-        };
-        reader.readAsDataURL(file);
-    } else if(file.type === 'application/pdf') {
-        previewDiv.innerHTML = `
-            <div class="relative bg-black/20 p-2 rounded-lg flex items-center gap-2 max-w-xs">
-                <i class="fas fa-file-pdf text-red-500 text-xl"></i>
-                <span class="text-sm truncate flex-1">${file.name}</span>
-                <button onclick="clearGCAttachment()" class="text-red-500 text-sm">x</button>
-            </div>`;
-    } else {
-        alert("Only images and PDFs are supported.");
-        this.value = '';
-        previewDiv.classList.add('hidden');
-    }
-});
-
-function openGroupChat(batchId, catId, catName) {
-    if(currentSection !== 'group-chat') sectionHistory.push(currentSection);
-    currentSection = 'group-chat';
-    
-    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-    document.getElementById('group-chat').classList.remove('hidden');
-    
-    const backBtn = document.getElementById('global-back-btn');
-    if(sectionHistory.length > 0) backBtn.classList.remove('hidden'); else backBtn.classList.add('hidden');
-
-    document.getElementById('gc-title').innerText = `${catName} Discussion`;
-    
-    currentGroupChatId = `${batchId}_${catId}`;
-    if(groupChatListener) groupChatListener.off();
-    
-    const win = document.getElementById('gc-window');
-    win.innerHTML = '<div class="m-auto text-gray-500">Loading messages...</div>';
-    
-    db.ref('users/' + currentUser.uid + '/lastReadGroup/' + currentGroupChatId).set(Date.now());
-    
-    groupChatListener = db.ref('groupChats/' + currentGroupChatId);
-    groupChatListener.on('value', snap => {
-        const msgs = snap.val() || {};
-        win.innerHTML = '';
-        
-        const sortedMsgs = Object.entries(msgs).sort((a, b) => a[1].timestamp - b[1].timestamp);
-        
-        if(sortedMsgs.length === 0) {
-            win.innerHTML = '<div class="m-auto text-gray-500 text-center">No messages yet. Start the discussion!</div>';
-            return;
-        }
-        
-        sortedMsgs.forEach(([id, m]) => {
-            const isMe = m.sender === currentUser.uid;
-            const cls = isMe ? 'chat-me' : 'chat-them';
-            const pic = m.pic || 'https://via.placeholder.com/40';
-            
-            let fileHtml = '';
-            if(m.file) {
-                if(m.file.includes('data:image')) {
-                    fileHtml = `<img src="${m.file}" class="mt-2 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="openFileViewer(this.src, 'image')">`;
-                } else {
-                    fileHtml = `<a href="${m.file}" onclick="openFileViewer(this.href, 'pdf'); return false;" class="mt-2 inline-flex items-center gap-2 text-blue-400 underline text-sm cursor-pointer"><i class="fas fa-file-pdf"></i> View PDF</a>`;
-                }
-            }
-            
-            if(isMe) {
-                win.innerHTML += `
-                    <div class="chat-msg ${cls}">
-                        ${m.text ? `<div>${m.text}</div>` : ''}
-                        ${fileHtml}
-                    </div>`;
-            } else {
-                win.innerHTML += `
-                    <div class="chat-msg ${cls}">
-                        <div class="inline-flex items-center gap-2 mb-1">
-                            <img src="${pic}" class="avatar-sm">
-                            <span class="text-xs font-bold text-[var(--accent2)]">${m.name}</span>
-                        </div>
-                        ${m.text ? `<div>${m.text}</div>` : ''}
-                        ${fileHtml}
-                    </div>`;
-            }
-        });
-        win.scrollTop = win.scrollHeight;
-    });
-}
-
-function sendGroupMessage() {
-    const input = document.getElementById('gc-msg');
-    const text = input.value.trim();
-    const fileInput = document.getElementById('gc-file-input');
-    const file = fileInput.files[0];
-
-    if(!text && !file) return;
-
-    const msgData = {
-        sender: currentUser.uid,
-        name: currentUserData.name,
-        pic: currentUserData.profilePic || "",
-        text: text || "",
-        timestamp: Date.now()
-    };
-
-    if(file) {
-        if(file.size > 5242880) {
-            alert("File too large. Max 5MB.");
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            msgData.file = e.target.result;
-            msgData.fileName = file.name;
-            db.ref('groupChats/' + currentGroupChatId).push(msgData);
-            input.value = '';
-            clearGCAttachment();
-        };
-        reader.readAsDataURL(file);
-    } else {
-        db.ref('groupChats/' + currentGroupChatId).push(msgData);
-        input.value = '';
-    }
-}
-// --- END GROUP CHAT LOGIC ---
-
 // --- NOTIFICATION LOGIC ---
-function calculateGroupUnread() {
-    if(!currentUser) return;
-    globalGroupUnreadCount = {};
-    const lastReadGroup = currentUserData?.lastReadGroup || {};
-    for(let groupId in globalGroupChats) {
-        let count = 0;
-        for(let mId in globalGroupChats[groupId]) {
-            const m = globalGroupChats[groupId][mId];
-            if(m.sender !== currentUser.uid && m.timestamp > (lastReadGroup[groupId] || 0)) {
-                count++;
-            }
-        }
-        globalGroupUnreadCount[groupId] = count;
-    }
-}
-
 function recalculateNotifications() {
     if(!currentUser) return;
     
@@ -1061,10 +1030,7 @@ function recalculateNotifications() {
         }
     }
     
-    let groupUnread = 0;
-    for(let id in globalGroupUnreadCount) groupUnread += globalGroupUnreadCount[id];
-    
-    const total = pendingReqs + unread + groupUnread;
+    const total = pendingReqs + unread;
     const badge = document.getElementById('chat-badge');
     
     if(total > 0) {
@@ -1163,7 +1129,6 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
             currentUserData = snap.val();
             if(currentUserData) {
                 updateUIForUser();
-                calculateGroupUnread();
                 if(!document.getElementById('home').classList.contains('hidden')) showSection('batches');
                 recalculateNotifications(); 
                 if(!document.getElementById('batch-categories').classList.contains('hidden') && selectedBatchId) showBatchCategories(selectedBatchId);
@@ -1175,7 +1140,7 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
             allUsers = snap.val() || {}; 
             renderUsersList(); 
             renderChatLists(); 
-            renderAdminChatMonitor(); // Update admin monitor list when users change
+            renderAdminChatMonitor(); 
         });
         db.ref('chatRequests').on('value', snap => { 
             allChatRequests = snap.val() || {}; 
@@ -1185,13 +1150,6 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
         db.ref('chats').on('value', snap => { 
             globalChats = snap.val() || {}; 
             recalculateNotifications(); 
-        });
-        db.ref('groupChats').on('value', snap => {
-            globalGroupChats = snap.val() || {};
-            calculateGroupUnread();
-            recalculateNotifications();
-            if(!document.getElementById('batch-categories').classList.contains('hidden') && selectedBatchId) showBatchCategories(selectedBatchId);
-            if(!document.getElementById('batches').classList.contains('hidden')) updateBatchUI();
         });
         db.ref('questions').on('value', snap => {
             const questions = snap.val() || {};
@@ -1294,19 +1252,17 @@ function loadDropdowns() {
         globalBatches = snap.val() || {};
         if(!snap.exists()) {
             const defaultBatches = { 
-                'batch_2028': { name: 'A/L 2028', desc: 'Science Project Batch 2028' },
-                'batch_discussion': { name: 'Discussion', desc: 'Group discussions for all subjects' }
+                'batch_2028': { name: 'A/L 2028', desc: 'Science Project Batch 2028' }
             };
             db.ref('batches').set(defaultBatches);
             globalBatches = defaultBatches;
         } else {
             if(globalBatches['batch_2026']) db.ref('batches/batch_2026').remove();
             if(globalBatches['batch_2027']) db.ref('batches/batch_2027').remove();
+            if(globalBatches['batch_discussion']) db.ref('batches/batch_discussion').remove();
+            
             if(!globalBatches['batch_2028']) {
                 db.ref('batches/batch_2028').set({ name: 'A/L 2028', desc: 'Science Project Batch 2028' });
-            }
-            if(!globalBatches['batch_discussion']) {
-                db.ref('batches/batch_discussion').set({ name: 'Discussion', desc: 'Group discussions for all subjects' });
             }
         }
         updateBatchUI();
@@ -1349,20 +1305,8 @@ function updateBatchUI() {
         if(qBatch) qBatch.innerHTML += `<option value="${id}">${b.name}</option>`;
         
         if(grid) {
-            let batchBadge = '';
-            if(b.name === 'Discussion') {
-                let totalBatchUnread = 0;
-                for(let catId in globalCategories) {
-                    totalBatchUnread += (globalGroupUnreadCount[`${id}_${catId}`] || 0);
-                }
-                if(totalBatchUnread > 0) {
-                    batchBadge = `<span class="absolute top-4 right-4 bg-red-600 text-white text-xs rounded-full h-6 min-w-[24px] px-2 flex items-center justify-center font-bold">${totalBatchUnread}</span>`;
-                }
-            }
-            
             grid.innerHTML += `
                 <div class="card p-6 cursor-pointer relative" onclick="showBatchCategories('${id}')">
-                    ${batchBadge}
                     <h3 class="text-2xl font-grotesk font-bold text-[var(--accent)]">${b.name}</h3>
                     <p class="text-gray-400 mt-2">${b.desc || 'Science Projects & Q&A'}</p>
                     <button class="mt-4 text-sm text-[var(--accent2)]">View Categories <i class="fas fa-arrow-right ml-1"></i></button>
@@ -1593,6 +1537,13 @@ function renderQuestions() {
                             <input type="file" id="file-input-${id}" accept="image/*, application/pdf" class="text-xs border-none w-full md:w-auto">
                             <button onclick="postReply('${id}')" class="btn-primary text-sm whitespace-nowrap">Send Reply</button>
                         </div>
+                    </div>
+                    
+                    <!-- Discussion Room Button -->
+                    <div class="mt-4 text-center">
+                        <button onclick="openQuestionRoom('${id}', \`${q.title.replace(/`/g, "'")}\`)" class="btn-primary text-sm">
+                            <i class="fas fa-comments mr-2"></i>${q.hasRoom ? 'Enter Discussion Room' : 'Open Room for Discussion'}
+                        </button>
                     </div>
                 </div>
             `;
