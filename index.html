@@ -441,6 +441,7 @@ let allUsers = {};
 let allChatRequests = {};
 let globalChats = {};
 let globalQuestionsCount = {};
+let globalQuestionRoomMsgCount = {};
 
 // --- FILE VIEWER LOGIC ---
 function openFileViewer(fileUrl, type) {
@@ -1151,6 +1152,20 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
             globalChats = snap.val() || {}; 
             recalculateNotifications(); 
         });
+        
+        // Track Question Room Message Counts
+        db.ref('questionRooms').on('value', snap => {
+            const rooms = snap.val() || {};
+            globalQuestionRoomMsgCount = {};
+            for(let rId in rooms) {
+                globalQuestionRoomMsgCount[rId] = Object.keys(rooms[rId]).length;
+            }
+            // Re-render Q&A if it's open to show updated badges
+            if(!document.getElementById('qa').classList.contains('hidden')) {
+                renderQuestions();
+            }
+        });
+
         db.ref('questions').on('value', snap => {
             const questions = snap.val() || {};
             globalQuestionsCount = {};
@@ -1397,159 +1412,174 @@ function postQuestion() {
     fileInput.value = '';
 }
 
+let qListener = null;
+let lastQData = null;
+
 function renderQuestions() {
+    if (qListener) {
+        if (lastQData) renderQuestionsUI(lastQData);
+        return;
+    }
+    qListener = db.ref('questions').on('value', snap => {
+        lastQData = snap.val() || {};
+        renderQuestionsUI(lastQData);
+    });
+}
+
+function renderQuestionsUI(questions) {
     const filterBatch = document.getElementById('qa-filter').value;
     const filterCat = document.getElementById('qa-cat-filter').value;
     const searchText = (document.getElementById('qa-search')?.value || "").toLowerCase();
     const list = document.getElementById('qa-list');
-    list.innerHTML = '<div class="text-gray-500">Loading...</div>';
+    list.innerHTML = '';
+    let found = false;
 
-    db.ref('questions').on('value', snap => {
-        const questions = snap.val() || {};
-        list.innerHTML = '';
-        let found = false;
+    const sortedQuestions = Object.entries(questions).sort((a, b) => b[1].timestamp - a[1].timestamp);
 
-        const sortedQuestions = Object.entries(questions).sort((a, b) => b[1].timestamp - a[1].timestamp);
-
-        for(let [id, q] of sortedQuestions) {
-            if(filterBatch && q.batch !== filterBatch) continue;
-            if(filterCat && q.category !== filterCat) continue;
-            
-            if(searchText) {
-                const titleMatch = q.title.toLowerCase().includes(searchText);
-                const bodyMatch = q.body.toLowerCase().includes(searchText);
-                const fileMatch = q.fileName && q.fileName.toLowerCase().includes(searchText);
-                let replyFileMatch = false;
-                if(q.replies) {
-                    for(let rId in q.replies) {
-                        if(q.replies[rId].fileName && q.replies[rId].fileName.toLowerCase().includes(searchText)) {
-                            replyFileMatch = true;
-                            break;
-                        }
-                    }
-                }
-                if(!titleMatch && !bodyMatch && !fileMatch && !replyFileMatch) continue;
-            }
-            
-            found = true;
-            
-            const batchName = globalBatches[q.batch]?.name || 'Unknown Batch';
-            const catName = globalCategories[q.category]?.name || 'General';
-            
-            let qFileHtml = '';
-            if(q.file) {
-                if(q.file.includes('data:image')) {
-                    qFileHtml = `<img src="${q.file}" class="mb-3 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="openFileViewer(this.src, 'image')">`;
-                } else {
-                    qFileHtml = `<a href="${q.file}" onclick="openFileViewer(this.href, 'pdf'); return false;" class="mb-3 inline-flex items-center gap-2 text-blue-400 underline text-sm cursor-pointer"><i class="fas fa-file-pdf"></i> View PDF Attachment</a>`;
-                }
-            }
-
-            let repliesHtml = '';
+    for(let [id, q] of sortedQuestions) {
+        if(filterBatch && q.batch !== filterBatch) continue;
+        if(filterCat && q.category !== filterCat) continue;
+        
+        if(searchText) {
+            const titleMatch = q.title.toLowerCase().includes(searchText);
+            const bodyMatch = q.body.toLowerCase().includes(searchText);
+            const fileMatch = q.fileName && q.fileName.toLowerCase().includes(searchText);
+            let replyFileMatch = false;
             if(q.replies) {
                 for(let rId in q.replies) {
-                    const r = q.replies[rId];
-                    const canDeleteReply = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
-                    
-                    let rFileHtml = '';
-                    if(r.file) {
-                        if(r.file.includes('data:image')) {
-                            rFileHtml = `<img src="${r.file}" class="mt-2 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="openFileViewer(this.src, 'image')">`;
-                        } else {
-                            rFileHtml = `<a href="${r.file}" onclick="openFileViewer(this.href, 'pdf'); return false;" class="mt-2 inline-flex items-center gap-2 text-blue-400 underline text-sm cursor-pointer"><i class="fas fa-file-pdf"></i> View PDF</a>`;
-                        }
+                    if(q.replies[rId].fileName && q.replies[rId].fileName.toLowerCase().includes(searchText)) {
+                        replyFileMatch = true;
+                        break;
                     }
+                }
+            }
+            if(!titleMatch && !bodyMatch && !fileMatch && !replyFileMatch) continue;
+        }
+        
+        found = true;
+        
+        const batchName = globalBatches[q.batch]?.name || 'Unknown Batch';
+        const catName = globalCategories[q.category]?.name || 'General';
+        
+        let qFileHtml = '';
+        if(q.file) {
+            if(q.file.includes('data:image')) {
+                qFileHtml = `<img src="${q.file}" class="mb-3 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="openFileViewer(this.src, 'image')">`;
+            } else {
+                qFileHtml = `<a href="${q.file}" onclick="openFileViewer(this.href, 'pdf'); return false;" class="mb-3 inline-flex items-center gap-2 text-blue-400 underline text-sm cursor-pointer"><i class="fas fa-file-pdf"></i> View PDF Attachment</a>`;
+            }
+        }
 
-                    repliesHtml += `
-                        <div class="mt-3 pl-4 border-l-2 border-[var(--muted)]">
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center gap-2">
-                                    <img src="${r.authorPic || 'https://via.placeholder.com/40'}" class="avatar-sm">
-                                    <p class="text-sm text-[var(--accent2)]">${r.authorName} <span class="text-gray-500">(${r.authorRole})</span></p>
-                                </div>
-                                ${canDeleteReply ? `<button onclick="deleteReply('${id}', '${rId}')" class="text-red-500 text-xs hover:text-red-400"><i class="fas fa-trash"></i></button>` : ''}
+        let repliesHtml = '';
+        if(q.replies) {
+            for(let rId in q.replies) {
+                const r = q.replies[rId];
+                const canDeleteReply = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
+                
+                let rFileHtml = '';
+                if(r.file) {
+                    if(r.file.includes('data:image')) {
+                        rFileHtml = `<img src="${r.file}" class="mt-2 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="openFileViewer(this.src, 'image')">`;
+                    } else {
+                        rFileHtml = `<a href="${r.file}" onclick="openFileViewer(this.href, 'pdf'); return false;" class="mt-2 inline-flex items-center gap-2 text-blue-400 underline text-sm cursor-pointer"><i class="fas fa-file-pdf"></i> View PDF</a>`;
+                    }
+                }
+
+                repliesHtml += `
+                    <div class="mt-3 pl-4 border-l-2 border-[var(--muted)]">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <img src="${r.authorPic || 'https://via.placeholder.com/40'}" class="avatar-sm">
+                                <p class="text-sm text-[var(--accent2)]">${r.authorName} <span class="text-gray-500">(${r.authorRole})</span></p>
                             </div>
-                            ${r.text ? `<p class="text-gray-300 mt-1 ml-10">${r.text}</p>` : ''}
-                            <div class="ml-10">${rFileHtml}</div>
+                            ${canDeleteReply ? `<button onclick="deleteReply('${id}', '${rId}')" class="text-red-500 text-xs hover:text-red-400"><i class="fas fa-trash"></i></button>` : ''}
                         </div>
-                    `;
-                }
+                        ${r.text ? `<p class="text-gray-300 mt-1 ml-10">${r.text}</p>` : ''}
+                        <div class="ml-10">${rFileHtml}</div>
+                    </div>
+                `;
             }
+        }
 
-            const canDeleteQ = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
-            
-            const is2028 = q.batch === 'batch_2028';
-            const isAuthor = q.authorId === currentUser.uid;
-            let answerHtml = '';
-            if (is2028) {
-                if (q.answer) {
-                    let answerFileHtml = '';
-                    if (q.answer.file) {
-                        if (q.answer.file.includes('data:image')) {
-                            answerFileHtml = `<img src="${q.answer.file}" class="mt-2 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="openFileViewer(this.src, 'image')">`;
-                        } else {
-                            answerFileHtml = `<a href="${q.answer.file}" onclick="openFileViewer(this.href, 'pdf'); return false;" class="mt-2 inline-flex items-center gap-2 text-blue-400 underline text-sm cursor-pointer"><i class="fas fa-file-pdf"></i> View PDF</a>`;
-                        }
+        const canDeleteQ = (currentUserData.role === 'Teacher' || currentUserData.role === 'Admin');
+        
+        const is2028 = q.batch === 'batch_2028';
+        const isAuthor = q.authorId === currentUser.uid;
+        let answerHtml = '';
+        if (is2028) {
+            if (q.answer) {
+                let answerFileHtml = '';
+                if (q.answer.file) {
+                    if (q.answer.file.includes('data:image')) {
+                        answerFileHtml = `<img src="${q.answer.file}" class="mt-2 rounded-lg max-w-full max-h-60 object-cover cursor-pointer" onclick="openFileViewer(this.src, 'image')">`;
+                    } else {
+                        answerFileHtml = `<a href="${q.answer.file}" onclick="openFileViewer(this.href, 'pdf'); return false;" class="mt-2 inline-flex items-center gap-2 text-blue-400 underline text-sm cursor-pointer"><i class="fas fa-file-pdf"></i> View PDF</a>`;
                     }
-                    answerHtml = `
-                        <div class="mt-4 p-4 border border-[var(--accent2)]/30 rounded-lg" style="background: rgba(255, 194, 51, 0.05);">
-                            <h4 class="font-bold text-[var(--accent2)] mb-2"><i class="fas fa-check-circle mr-2"></i>Official Answer</h4>
-                            <p class="text-gray-300 whitespace-pre-wrap">${q.answer.text}</p>
-                            ${answerFileHtml}
-                            ${isAuthor ? `<button onclick="openAnswerModal('${id}')" class="mt-3 text-xs btn-primary px-2 py-1">Edit Answer</button>` : ''}
-                        </div>
-                    `;
-                } else if (isAuthor) {
-                    answerHtml = `
-                        <div class="mt-4 p-3 bg-black/20 rounded-lg text-center">
-                            <button onclick="openAnswerModal('${id}')" class="btn-primary text-sm">Upload Official Answer</button>
-                        </div>
-                    `;
                 }
+                answerHtml = `
+                    <div class="mt-4 p-4 border border-[var(--accent2)]/30 rounded-lg" style="background: rgba(255, 194, 51, 0.05);">
+                        <h4 class="font-bold text-[var(--accent2)] mb-2"><i class="fas fa-check-circle mr-2"></i>Official Answer</h4>
+                        <p class="text-gray-300 whitespace-pre-wrap">${q.answer.text}</p>
+                        ${answerFileHtml}
+                        ${isAuthor ? `<button onclick="openAnswerModal('${id}')" class="mt-3 text-xs btn-primary px-2 py-1">Edit Answer</button>` : ''}
+                    </div>
+                `;
+            } else if (isAuthor) {
+                answerHtml = `
+                    <div class="mt-4 p-3 bg-black/20 rounded-lg text-center">
+                        <button onclick="openAnswerModal('${id}')" class="btn-primary text-sm">Upload Official Answer</button>
+                    </div>
+                `;
             }
-            
-            list.innerHTML += `
-                <div class="card p-5">
-                    <div class="flex flex-wrap justify-between items-start mb-2 gap-2">
-                        <h3 class="text-xl font-bold text-[var(--accent)]">${q.title}</h3>
-                        <div class="flex gap-2 items-center">
-                            <span class="tag">${batchName}</span>
-                            <span class="tag tag-cat">${catName}</span>
-                            ${canDeleteQ ? `<button onclick="deleteQuestion('${id}')" class="btn-danger text-xs px-2 py-1"><i class="fas fa-trash"></i> Delete</button>` : ''}
-                        </div>
-                    </div>
-                    <p class="text-gray-400 mb-3">${q.body}</p>
-                    ${qFileHtml}
-                    <div class="flex items-center gap-2 mt-2">
-                        <img src="${q.authorPic || 'https://via.placeholder.com/40'}" class="avatar-sm">
-                        <p class="text-sm text-gray-500">Asked by ${q.authorName} (${q.authorRole})</p>
-                    </div>
-                    
-                    ${answerHtml}
-                    
-                    <div class="replies-section mt-4">
-                        ${repliesHtml}
-                    </div>
-                    
-                    <div class="mt-4 p-3 bg-black/20 rounded-lg flex flex-col md:flex-row gap-2 items-start">
-                        <textarea id="reply-input-${id}" placeholder="Type a reply here..." rows="2" class="flex-1 w-full bg-transparent"></textarea>
-                        <div class="flex gap-2 w-full md:w-auto items-center">
-                            <input type="file" id="file-input-${id}" accept="image/*, application/pdf" class="text-xs border-none w-full md:w-auto">
-                            <button onclick="postReply('${id}')" class="btn-primary text-sm whitespace-nowrap">Send Reply</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Discussion Room Button -->
-                    <div class="mt-4 text-center">
-                        <button onclick="openQuestionRoom('${id}', \`${q.title.replace(/`/g, "'")}\`)" class="btn-primary text-sm">
-                            <i class="fas fa-comments mr-2"></i>${q.hasRoom ? 'Enter Discussion Room' : 'Open Room for Discussion'}
-                        </button>
+        }
+        
+        const roomMsgCount = globalQuestionRoomMsgCount[id] || 0;
+        const safeTitle = q.title.replace(/`/g, "'").replace(/'/g, "\\'"); 
+        
+        list.innerHTML += `
+            <div class="card p-5">
+                <div class="flex flex-wrap justify-between items-start mb-2 gap-2">
+                    <h3 class="text-xl font-bold text-[var(--accent)]">${q.title}</h3>
+                    <div class="flex gap-2 items-center">
+                        <span class="tag">${batchName}</span>
+                        <span class="tag tag-cat">${catName}</span>
+                        ${canDeleteQ ? `<button onclick="deleteQuestion('${id}')" class="btn-danger text-xs px-2 py-1"><i class="fas fa-trash"></i> Delete</button>` : ''}
                     </div>
                 </div>
-            `;
-        }
-        if(!found) list.innerHTML = '<div class="text-gray-500">No questions found matching your search or filter.</div>';
-    });
+                <p class="text-gray-400 mb-3">${q.body}</p>
+                ${qFileHtml}
+                <div class="flex items-center gap-2 mt-2">
+                    <img src="${q.authorPic || 'https://via.placeholder.com/40'}" class="avatar-sm">
+                    <p class="text-sm text-gray-500">Asked by ${q.authorName} (${q.authorRole})</p>
+                </div>
+                
+                ${answerHtml}
+                
+                <div class="replies-section mt-4">
+                    ${repliesHtml}
+                </div>
+                
+                <div class="mt-4 p-3 bg-black/20 rounded-lg flex flex-col md:flex-row gap-2 items-start">
+                    <textarea id="reply-input-${id}" placeholder="Type a reply here..." rows="2" class="flex-1 w-full bg-transparent"></textarea>
+                    <div class="flex gap-2 w-full md:w-auto items-center">
+                        <input type="file" id="file-input-${id}" accept="image/*, application/pdf" class="text-xs border-none w-full md:w-auto">
+                        <button onclick="postReply('${id}')" class="btn-primary text-sm whitespace-nowrap">Send Reply</button>
+                    </div>
+                </div>
+                
+                <!-- Discussion Room Button with Notification -->
+                <div class="mt-4 text-center">
+                    <div class="relative inline-block">
+                        <button onclick="openQuestionRoom('${id}', '${safeTitle}')" class="btn-primary text-sm">
+                            <i class="fas fa-comments mr-2"></i>${q.hasRoom ? 'Enter Discussion Room' : 'Open Room for Discussion'}
+                        </button>
+                        ${roomMsgCount > 0 ? `<span class="absolute -top-2 -right-3 bg-red-600 text-white text-[10px] rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center font-bold border-2 border-[var(--card)]">${roomMsgCount}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    if(!found) list.innerHTML = '<div class="text-gray-500">No questions found matching your search or filter.</div>';
 }
 
 function postReply(qId) {
